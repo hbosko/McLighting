@@ -1,5 +1,5 @@
 
-const char* FIRMWARE_VERSION = "3.0.2";
+const char* FIRMWARE_VERSION = "3.0.3";
 
 const char* hardCode_SSID    = "SSID";
 const char* hardCode_PASS    = "PWD";

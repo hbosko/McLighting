@@ -1,5 +1,5 @@
 // disable DEGUG on live product!!
-#define ENABLE_DEBUG_service 1
+#define ENABLE_DEBUG_service 0
 
 #define ENABLE_webSockets_service 1
 #define ENABLE_MQTT_service 1
