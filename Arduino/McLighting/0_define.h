@@ -1,4 +1,3 @@
-//Disable DEBUG on final product
 #if ENABLE_DEBUG_service == 1
   #define ENABLE_DEBUG
 #endif

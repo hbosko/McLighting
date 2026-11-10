@@ -1,4 +1,3 @@
-
 #ifdef ENABLE_UDP
 
   //todo: autoscan if master or slave.. with same "BoardType"!, now works only if you scan from website...

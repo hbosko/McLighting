@@ -1,4 +1,3 @@
-
 #ifdef ENABLE_BLINK
 
   const char* ESP_pin_name[] PROGMEM = {
@@ -15,14 +14,14 @@
     uint8_t ESP_led = ESP_pin[1];
   */
 
-    const uint8_t ESP_led = 0;
-    const uint8_t ESP_buzzer = 1;
+  const uint8_t ESP_led = 0;
+  const uint8_t ESP_buzzer = 1;
 
-    unsigned long esp_LED_pm[ESP_pin_size];
-    uint8_t esp_LED_state[ESP_pin_size];
-    bool esp_LED_blink_enabled[ESP_pin_size];
-    uint8_t esp_LED_mode[ESP_pin_size];
-    uint8_t esp_LED_counting[ESP_pin_size];
-    bool esp_LED_isPause[ESP_pin_size];
+  unsigned long esp_LED_pm[ESP_pin_size];
+  uint8_t esp_LED_state[ESP_pin_size];
+  bool esp_LED_blink_enabled[ESP_pin_size];
+  uint8_t esp_LED_mode[ESP_pin_size];
+  uint8_t esp_LED_counting[ESP_pin_size];
+  bool esp_LED_isPause[ESP_pin_size];
 
 #endif
