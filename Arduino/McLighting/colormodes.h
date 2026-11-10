@@ -8,7 +8,7 @@ unsigned long currentDipTime;
 unsigned long dipStartTime;
 unsigned long currentMillis;
 int ledState = LOW;
-long previousMillis = 0; 
+unsigned long previousMillis = 0;
 int led = 5;
 int interval = 2000;
 int twitch = 50;
@@ -19,31 +19,33 @@ int ledStates[NUMLEDS];
 
 
 void hsb2rgbAN1(uint16_t index, uint8_t sat, uint8_t bright, uint8_t myled) {
-    // Source: https://blog.adafruit.com/2012/03/14/constant-brightness-hsb-to-rgb-algorithm/
+    // Source: https://adafruit.com
     uint8_t temp[5], n = (index >> 8) % 3;
-    temp[0] = temp[3] = (uint8_t)((                                         (sat ^ 255)  * bright) / 255);
-    temp[1] = temp[4] = (uint8_t)((((( (index & 255)        * sat) / 255) + (sat ^ 255)) * bright) / 255);
-    temp[2] =           (uint8_t)(((((((index & 255) ^ 255) * sat) / 255) + (sat ^ 255)) * bright) / 255);
+    
+    temp[0] = temp[3] = (uint8_t)(((sat ^ 255) * bright) / 255);
+    temp[1] = temp[4] = (uint8_t)((((index & 255) * sat / 255) + (sat ^ 255)) * bright / 255);
+    temp[2] =           (uint8_t)(((((index & 255) ^ 255) * sat / 255) + (sat ^ 255)) * bright / 255);
 
     if(strip) strip->setPixelColor(myled, temp[n + 2], temp[n + 1], temp[n]);
 }
 
 
-void updateLed (int led, int brightness) {
-	ledStates[led] = brightness;
+void updateLed(int target_led, int brightness, boolean triggerShow) {
+	ledStates[target_led] = brightness;
 	
-	for (int i=0; i<NUMLEDS; i++)
+	for (int i = 0; i < NUMLEDS; i++)
 	{
-		uint16_t index = (i%3 == 0) ? 400 : random(0,767);
+		uint16_t index = (i % 3 == 0) ? 400 : random(0, 767);
 		hsb2rgbAN1(index, 200, ledStates[i], i);
 	}
-	if(strip) strip->show();
+  
+	if (triggerShow && strip) {
+    strip->show();
+  }
 }
 
 
-// See: http://forum.mysensors.org/topic/85/phoneytv-for-vera-is-here/13
 void tv() {
-	checkForRequests();
 	if (exit_func) {
 		exit_func = false;
 		return;
@@ -52,48 +54,68 @@ void tv() {
 	if (timeToDip == false)
 	{
 		currentMillis = millis();
-		if(currentMillis-previousMillis > interval) 
+		if (currentMillis - previousMillis > interval) 
 		{
 			previousMillis = currentMillis;
-			interval = random(750,4001);//Adjusts the interval for more/less frequent random light changes
-			twitch = random(40,100);// Twitch provides motion effect but can be a bit much if too high
-			dipCount = dipCount++;
+			interval = random(750, 4001);
+			twitch = random(40, 100);
+			dipCount++;
 		}
-		if(currentMillis-previousMillis<twitch)
+    
+		if (currentMillis - previousMillis < twitch)
 		{
-			led=random(0, (strip->numPixels()-1));
-			analogLevel=random(50,255);// set the range of the 3 pwm leds
-			ledState = ledState == LOW ? HIGH: LOW; // if the LED is off turn it on and vice-versa:
-			
-			updateLed(led, (ledState) ? 255 : 0);
-			
-			if (dipCount > dipInterval)
-			{ 
-				DBG_OUTPUT_PORT.println("dip");
-				timeToDip = true;
-				dipCount = 0;
-				dipStartTime = millis();
-				darkTime = random(50,150);
-				dipInterval = random(5,250);// cycles of flicker
-			}
-			//strip->show();
+      if (strip) {
+        led = random(0, strip->numPixels());
+        analogLevel = random(50, 255);
+        ledState = (ledState == LOW) ? HIGH : LOW;
+        
+        updateLed(led, (ledState == HIGH) ? 255 : 0, true);
+        
+        if (dipCount > dipInterval)
+        { 
+          DEBUG_PRINTLN(F("TV: Sprožam zatemnitev (Dip)"));
+          timeToDip = true;
+          dipCount = 0;
+          dipStartTime = millis();
+          darkTime = random(50, 150);
+          dipInterval = random(5, 250);
+        }
+      }
 		} 
 	}
 	else
 	{
-		DBG_OUTPUT_PORT.println("Dip Time");
 		currentDipTime = millis();
 		if (currentDipTime - dipStartTime < darkTime)
 		{
-			for (int i=3; i<strip->numPixels(); i++)
-			{
-				updateLed(i, 0);
-			}
+      if (strip) {
+        for (int i = 0; i < strip->numPixels(); i++)
+        {
+          updateLed(i, 0, false); 
+        }
+        strip->show();
+      }
 		}
 		else
 		{
 			timeToDip = false;
 		}
-		if(strip) strip->show();
 	}
+}
+
+
+//******************************************************************************************
+//                     PALETTE ANIMATION FUNCTIONS
+//******************************************************************************************
+
+void FillLEDsFromPaletteColors(uint8_t colorIndex)
+{
+  if (!strip) return;
+  
+  for(int i = 0; i < WS2812FXStripSettings.stripSize; i++) {
+    strip->setColor(main_color.red, main_color.green, main_color.blue);
+    
+    if (anim_direction == "forward") { colorIndex += 3; }
+    if (anim_direction == "back")    { colorIndex -= 3; }
+  }
 }

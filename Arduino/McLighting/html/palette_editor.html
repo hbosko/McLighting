@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urejevalnik Palet</title>
+    <style>
+        :root {
+            --bg-main: #0d0e12;
+            --bg-card: #161822;
+            --bg-input: #212433;
+            --text-main: #e2e8f0;
+            --text-muted: #8a94a6;
+            --accent-glow: #00ffca;
+            --border-radius: 16px;
+            --success: #39ff14;
+            --danger: #ff3131;
+            --btn-link-bg: #555555;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg-main); 
+            padding: 15px; 
+            color: var(--text-main); 
+        }
+        
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: var(--bg-card); 
+            padding: 10px; 
+            border-radius: var(--border-radius); 
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); 
+        }
+        
+        h2 { border-bottom: 2px solid var(--bg-input); padding-bottom: 10px; margin-top: 0; }
+
+        .add-section {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+        .form-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+        
+        input[type="text"] { 
+            flex: 1;
+            min-width: 150px;
+            padding: 10px; 
+            background: var(--bg-input);
+            border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 8px; 
+            color: var(--text-main);
+            outline: none;
+        }
+        input[type="text"]:focus { border-color: var(--accent-glow); }
+        
+        .color-inputs { display: flex; gap: 8px; }
+        input[type="color"] { 
+            width: 40px; 
+            height: 38px; 
+            border: none; 
+            cursor: pointer; 
+            background: transparent;
+        }
+        
+        button { 
+            padding: 10px 15px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 14px;
+        }
+        
+        .btn-add { background: var(--success); color: #000; width: 100%; }
+        .btn-edit { background: var(--btn-link-bg); color: var(--text-main); }
+        .btn-delete { background: var(--danger); color: white; }
+        .btn-save { background: var(--accent-glow); color: #000; }
+        .btn-cancel { background: var(--btn-link-bg); color: var(--text-main); }
+        
+        .palette-list { margin-top: 20px; }
+        
+        .palette-item { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px; 
+            background: var(--bg-input);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255,255,255,0.02);
+        }
+        
+        .palette-info { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; flex: 1; }
+        .palette-name { font-weight: bold; min-width: 140px; }
+        .color-preview { display: flex; gap: 6px; }
+        .color-box { width: 32px; height: 32px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); }
+        
+        .actions { display: flex; gap: 8px; }
+
+        .json-output { 
+            background: #050507; color: var(--accent-glow); padding: 15px; 
+            border-radius: 8px; overflow-x: auto; font-family: monospace; 
+            white-space: pre-wrap; border: 1px solid var(--bg-input);
+        }
+
+        /* 📱 MOBILNI POPRAVKI */
+        @media (max-width: 600px) {
+            .palette-item { flex-direction: column; align-items: stretch; text-align: center; }
+            .palette-info { flex-direction: column; align-items: center; gap: 10px; }
+            .actions { width: 100%; }
+            .actions button { flex: 1; padding:6px; }
+            .edit-name-input { width: 80%; text-align: center; }
+        }
+.btn-home {
+    display: block;
+    padding: 8px 14px;
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid rgba(78, 73, 73, 0.829);
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.btn-home:hover {
+    color: var(--accent-glow);
+    border-color: var(--accent-glow);
+    background: rgba(0, 255, 202, 0.05);
+    box-shadow: 0 0 10px rgba(0, 255, 202, 0.2);
+}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div style="margin-bottom: 15px;text-align: center;">
+        <a href="/" class="btn-home">🎨 Urejevalnik Palet</a>
+    </div>
+
+    <div class="add-section">
+        <div class="form-row">
+            <input type="text" id="new-palette-name" placeholder="Ime nove palete 🚀">
+            <div class="color-inputs">
+                <input type="color" id="new-color1" value="#FF0055">
+                <input type="color" id="new-color2" value="#00FFCC">
+                <input type="color" id="new-color3" value="#9900FF">
+            </div>
+        </div>
+        <button class="btn-add" onclick="addPalette()">+ Dodaj novo paleto</button>
+    </div>
+
+    <div class="palette-list" id="palette-list">
+        <p style="color: var(--text-muted)">Nalagam palete...</p>
+    </div>
+
+    <details style="margin-top: 30px; cursor: pointer;">
+        <summary style="font-weight: bold; color: var(--text-muted); user-select: none;">⚙️ Prikaži JSON strukturo</summary>
+        <div class="json-output" id="json-output" style="margin-top: 10px;"></div>
+    </details>
+</div>
+
+<script>
+    let data = { "type": "palettes", "list": [] };
+    let serverURL_save_Palettes = '/pal/save';
+
+    function fetchAndRenderPalettes() {
+        fetch('/palette.json')
+        .then(response => response.ok ? response.json() : throwError())
+        .then(jsonData => { if(jsonData.list) { data = jsonData; render(); } })
+        .catch(() => {
+            data = {"type":"palettes","list":[{"id":0,"name":"Neon Rage 😡","colors":["#FF0055","#00FFCC","#9900FF"]},{"id":1,"name":"Deep Anger 🖤","colors":["#110000","#FF0000","#330000"]},{"id":2,"name":"Chill Out 🌊","colors":["#0055FF","#00FF88","#001133"]}]};
+            render();
+        });
+    }
+
+    function savePalettesToESP() {
+        fetch(serverURL_save_Palettes, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        }).catch(err => console.error(err));
+    }
+
+    // GLAVNI IZRIS SEZNAMA
+    function render() {
+        const listContainer = document.getElementById('palette-list');
+        listContainer.innerHTML = '';
+
+        data.list.forEach(palette => {
+            const item = document.createElement('div');
+            item.className = 'palette-item';
+            item.id = `item-${palette.id}`;
+            
+            let colorBoxes = '';
+            palette.colors.forEach(color => {
+                colorBoxes += `<div class="color-box" style="background-color: ${color}"></div>`;
+            });
+
+            item.innerHTML = `
+                <div class="palette-info" id="info-${palette.id}">
+                    <span class="palette-name">${palette.name}</span>
+                    <div class="color-preview">${colorBoxes}</div>
+                </div>
+                <div class="actions" id="actions-${palette.id}">
+                    <button class="btn-edit" onclick="switchToEditMode(${palette.id})">Uredi</button>
+                    <button class="btn-delete" onclick="deletePalette(${palette.id})">Odstrani</button>
+                </div>
+            `;
+            listContainer.appendChild(item);
+        });
+
+        document.getElementById('json-output').textContent = JSON.stringify(data, null, 4);
+    }
+
+    function switchToEditMode(id) {
+        const palette = data.list.find(p => p.id === id);
+        if (!palette) return;
+
+        const infoDiv = document.getElementById(`info-${id}`);
+        const actionsDiv = document.getElementById(`actions-${id}`);
+
+        infoDiv.innerHTML = `
+            <input type="text" class="edit-name-input" id="edit-name-${id}" value="${palette.name}">
+            <div class="color-inputs">
+                <input type="color" id="edit-c1-${id}" value="${palette.colors[0]}">
+                <input type="color" id="edit-c2-${id}" value="${palette.colors[1]}">
+                <input type="color" id="edit-c3-${id}" value="${palette.colors[2]}">
+            </div>
+        `;
+
+        actionsDiv.innerHTML = `
+            <button class="btn-save" onclick="saveInlineEdit(${id})">Shrani</button>
+            <button class="btn-cancel" onclick="render()">Prekliči</button>
+        `;
+    }
+
+    function saveInlineEdit(id) {
+        const newName = document.getElementById(`edit-name-${id}`).value.trim();
+        if (!newName) return alert('Ime ne sme biti prazno!');
+
+        const palette = data.list.find(p => p.id === id);
+        if (palette) {
+            palette.name = newName;
+            palette.colors = [
+                document.getElementById(`edit-c1-${id}`).value,
+                document.getElementById(`edit-c2-${id}`).value,
+                document.getElementById(`edit-c3-${id}`).value
+            ];
+            render();
+            savePalettesToESP();
+        }
+    }
+
+function addPalette() {
+    const nameInput = document.getElementById('new-palette-name');
+    const name = nameInput.value.trim();
+    if (!name) return alert('Vnesite ime!');
+
+    const nextId = data.list.length > 0 ? Math.max(...data.list.map(p => p.id)) + 1 : 0;
+
+const colors = [
+document.getElementById('new-color1').value,
+document.getElementById('new-color2').value,
+document.getElementById('new-color3').value
+];
+data.list.push({ id: nextId, name: name, colors: colors });
+nameInput.value = '';
+render();
+savePalettesToESP();
+}
+function deletePalette(id) {
+if (confirm('Ali ste prepričani?')) {
+data.list = data.list.filter(p => p.id !== id);
+render();
+savePalettesToESP();
+}
+}
+window.onload = fetchAndRenderPalettes;
+</script>
+</body>
+</html>

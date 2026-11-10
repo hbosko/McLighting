@@ -1,0 +1,1829 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mc Lighting v1.5 - Modern</title>
+  <style>
+
+.hide {display:none !important}
+
+:root {
+    --bg-main: #0d0e12;
+    --bg-card: #161822;
+    --bg-input: #212433;
+    --text-main: #e2e8f0;
+    --text-muted: #8a94a6;
+    --accent-glow: #00ffca;
+    --border-radius: 16px;
+    --nav-bg: #a9a9a9;
+    --success: #39ff14;
+    --danger: #ff3131;
+    --btn-link-bg: #555555;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+background-color: var(--bg-main);
+display: flex;
+min-height: 100vh;
+margin: 0;
+color: var(--text-main);    
+-webkit-text-size-adjust: 100%
+}
+
+.container {
+  width: 100%;
+  background: var(--bg-card);
+  margin: 0 auto;
+  border-radius: var(--border-radius);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+  text-align: center;
+  border: 1px solid #25293a;
+  padding: 50px 10px 90px 10px;
+}
+
+h1 {
+  font-size: 1.4rem;
+  margin-bottom: 24px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  text-transform: uppercase;
+  text-shadow: 0 0 10px rgba(255,255,255,0.1);
+}
+
+.Canvas {
+  position: relative !important;
+  width: 333px !important;
+  height: 333px !important;
+  margin: 24px auto 24px auto;
+}
+
+canvas {
+  display: block;
+  width: 333px !important;
+  height: 333px !important;
+  border-radius: 50%;
+  cursor: crosshair;
+}
+
+.color-dragger {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  background: #ffffff;
+  border: 4px solid #000000;
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.8), 0 4px 10px rgba(0,0,0,0.7);
+  pointer-events: none;
+  z-index: 10;
+  left: 0;
+  top: 0;
+}
+
+.slider-section {
+  margin-bottom: 24px;
+  background: var(--bg-input);
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #2d3147;
+}
+
+.slider-group {
+  margin-bottom: 14px;
+  text-align: left;
+}
+
+.slider-group:last-child { margin-bottom: 0; }
+
+.slider-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.slider-label-row span:last-child {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.slider {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 4px;
+  outline: none;
+  background: #12131a;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  border: 2px solid var(--track-color, #fff);
+  transition: transform 0.1s ease;
+}
+
+.slider::-webkit-slider-thumb:active { transform: scale(1.2); }
+
+#rng_red { --track-color: #ff4757; }
+#rng_green { --track-color: #2ed573; }
+#rng_blue { --track-color: #1e90ff; }
+
+#btn_modes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.btn_link,.btn_mode {
+  background: var(--bg-input);
+  color: var(--text-main);
+  border: 2px solid #61657d;
+  padding: 10px 5px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn_link,.btn_mode:hover {
+  border-color: var(--text-muted);
+  background: #282b3d;
+}
+
+.btn_mode.active {
+  background: linear-gradient(135deg, #00f5d4, #00bbf9);
+  color: #0d0e12;
+  border-color: transparent;
+  box-shadow: 0 4px 15px rgba(0, 245, 212, 0.3);
+}
+
+.btn_mode:active { transform: scale(0.97); }
+
+.status-bar {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #2d3147;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+}
+
+.tab-bar {
+  width: 100%;
+  height:40px;
+  background-color: var(--nav-bg);
+  border-radius: 20px 20px 0px 0px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0px -9px 14px 6px rgba(0, 0, 0, 0.45);
+}
+.tab-bar .home {
+  position: relative;
+  bottom: 15px;
+  background-color: var(--nav-bg);
+  width: 70px;
+  height: 70px;
+  transition: 0.5s;
+}
+
+.svg-icon {
+  box-shadoW: 0px -9px 14px 6px rgba(0,0,0,0.45);
+  padding: 5px;
+  background-color: var(--nav-bg);
+  position: relative;
+  bottom: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  width: 64px;
+  border-radius:50%;
+}
+
+.svg-icon svg {
+  width: 40px;
+  height: 40px;
+}
+
+.svg,
+.home svg {
+  width: 60px;
+  height: 60px;
+}
+
+.spin {
+  transform-origin: 250px 250px; 
+  animation: spins 10s linear infinite;
+}
+
+.spins {
+  transform-origin: 50% 50%; 
+  animation: spins 15s linear infinite;
+}
+@keyframes spins {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.headr {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  background-color: var(--nav-bg);
+  border-radius: 0px 0px 20px 20px;
+  color: #000;
+  z-index: 10;
+  transform: translateX(-50%);
+  left: 50%;
+}
+
+.head_wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  padding: 0 20px;
+}
+
+.logo {
+  color: #000;
+  font-size: 20px;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+#udp {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+@media only screen and (max-width: 600px) {
+  #btn_modes{grid-template-columns: repeat(auto-fit, minmax(111px, 1fr));}
+
+}
+
+@media only screen and (min-width:601px) {
+  .headr,
+  .tab-bar,
+  .foot-wrapper,
+  .container {
+      width: 85%;
+  }
+}
+
+@media only screen and (min-width:993px) {
+  .headr,
+  .tab-bar,
+  .foot-wrapper,
+  .container {
+      width: 70%;
+  }
+}
+
+.red, #rng_red {
+  background: #e53935;
+  color: #ffffff;
+}
+
+.blue, #rng_blue {
+  background: #1e88e5;
+  color: #ffffff;
+}
+
+.yellow, #rng_brightness {
+  background: #ffb300;
+  color: #1a1d26;
+}
+
+.orange, #rng_orange {
+  background: #fb8c00;
+  color: #1a1d26;
+}
+
+.green, #rng_green {
+  background: #4caf50;
+  color: #ffffff;
+}
+
+.purple, #rng_purple {
+  background: #8e24aa;
+  color: #ffffff;
+}
+
+.red-orange, #rng_redorange {
+  background: #f4511e;
+  color: #1a1d26;
+}
+
+.yellow-orange, #rng_amber {
+  background: #ff8f00;
+  color: #1a1d26;
+}
+
+.yellow-green, #rng_lime {
+  background: #7cb342;
+  color: #1a1d26;
+}
+
+.cyan, #rng_cyan {
+  background: #457b9d;
+  color: #ffffff;
+}
+
+.indigo, #rng_indigo {
+  background: #3f51b5;
+  color: #1a1d26;
+}
+
+.magenta, #rng_magenta {
+  background: #d81b60;
+  color: #ffffff;
+}
+
+.toast-container {
+  position: fixed;
+  z-index: 9999;
+  width: 280px;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toast-container.top-right {
+  top: 20px;
+  right: 20px;
+  align-items: flex-end;
+}
+
+.toast-container.top-left {
+  top: 20px;
+  left: 20px;
+  align-items: flex-start;
+}
+
+.toast-container.bottom-right {
+  bottom: 20px;
+  right: 20px;
+  align-items: flex-end;
+}
+
+.toast-container.bottom-left {
+  bottom: 20px;
+  left: 20px;
+  align-items: flex-start;
+}
+
+.toast {
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: rgba(30, 39, 51, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  pointer-events: auto;
+  width: max-content;
+  max-width: 320px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 12px rgba(255, 255, 255, 0.05);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin 0.3s ease;
+  transform: translateX(0) scale(1);
+}
+
+.toast-container.top-right .toast.toast-exit, 
+.toast-container.bottom-right .toast.toast-exit {
+  transform: translateX(340px) scale(0.9);
+  opacity: 0;
+}
+
+.toast-container.top-left .toast.toast-exit, 
+.toast-container.bottom-left .toast.toast-exit {
+  transform: translateX(-340px) scale(0.9);
+  opacity: 0;
+}
+
+.sl_info {
+  margin-right: 10px;
+  width: 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  text-align: center;
+}
+
+.slider_div {
+  align-items: baseline;
+  display: flex;
+  flex-direction: row;
+}
+
+.sl_container {
+  margin: 0 auto;
+  max-width: 360px;
+}
+
+.slider_div {
+  padding-bottom: 15px;
+}
+
+.slider_div [class*="sl_lbl_"] {
+  background-color: var(--sl-lbl-bg);
+  width: 30%;
+  margin: 0px 2px 0px 2px;
+  display: inline-block;
+  border-radius: 10px 10px 0px 0px;
+}
+
+.sl_range {
+  width: 100%;
+  height: 5px;
+  cursor: pointer;
+  margin: 0;
+  border-radius: 20px;
+  border: none;
+}
+
+.sl_range::-webkit-slider-thumb {
+  border: 1px solid #fff;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #000;
+  cursor: pointer
+}
+
+.sl_range,
+.sl_range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+}
+.sl_range input[type=range]:active::-webkit-slider-thumb {
+  transform: scale(1.15);
+  border-color: #ffffff;
+}
+
+.dropup-content {
+  display: none;
+  position: absolute;
+  background-color: #f1f1f1;
+  min-width: 140px;
+  bottom: 45px;
+  left: 5px;
+  z-index: 1;
+  border-radius: 15px 30px 30px 0px;
+  border: 5px solid black;
+  -webkit-box-shadow: 0px 0px 20px 10px rgba(0, 0, 0, 0.36);
+  box-shadow: 0px 0px 20px 10px rgba(0, 0, 0, 0.36);
+}
+
+.dropup-content a {
+  color: black;
+  padding: 12px 16px;
+  display: block;
+}
+
+.dropup-content a:hover {
+  background-color: #ccc;
+}
+
+.dropup:hover .dropup-content {
+  display: block;
+  overflow: hidden;
+}
+
+.palette-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-top: 15px;
+  padding: 10px;
+}
+
+.palette-btn {
+  border: none;
+  color: white;
+  height: 50px; 
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+  font-weight: bold;
+  font-size: 13px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.palette-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px rgba(0,0,0,0.4);
+}
+
+.palette-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.btn_active {
+  box-shadow: inset 0px 0px 10px 5px rgba(0, 245, 212, 0.502);
+  border: 2px solid;
+  border-color: #00f5d480;
+  outline-width: 1px;
+  outline-offset: 0;
+  outline-color: rgba(0, 130, 206, 0.75);
+  outline-style: solid;
+  animation: animateOutline 2s ease infinite;
+  overflow: visible !important; 
+  -webkit-tap-highlight-color: transparent; 
+}
+
+@keyframes animateOutline {
+  0% {
+    outline-width: 1px;
+    outline-offset: 0;
+    outline-color: rgba(0, 130, 206, 0);
+  }
+  10% {
+    outline-color: rgba(0, 130, 206, 0.75);
+  }
+  50% {
+    outline-width: 7px;
+    outline-offset: 4px;
+    outline-color: rgba(0, 130, 206, 0);
+  }
+  100% {
+    outline-width: 7px;
+    outline-offset: 4px;
+    outline-color: rgba(102, 102, 102, 0);
+  }
+}
+
+.btn_active_bak {
+  background: linear-gradient(135deg, #00f5d4, #00bbf9) !important;
+  color: #0d0e12 !important;
+  border-color: transparent !important;
+  box-shadow: 0 0 15px #00f5d480 !important;
+  font-weight: bold !important;
+}
+
+.gr_head  {
+  margin-bottom: 24px;
+  background: var(--bg-input);
+  padding-bottom: 16px;
+  border-radius: 12px;
+  border: 1px solid #2d3147;
+}
+
+.sub_mod_box input, select, #navSub .link, .linkz .link {
+    background-color: var(--btn-link-bg);
+    border: 2px solid #000;
+    display: inline-block;
+    color: white;
+    padding: 8px 15px;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.sub_mod_box {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #666;
+  text-align: center;
+}
+
+.sub_mod_box * {
+  width: 100%;  font-size: 1.70rem;
+}
+
+.grid {
+  width: 95%;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-gap: 5px;
+}
+.mod_box {
+  background-color: var(--modal-bg);
+  display: inline-block;
+  width: 100%;
+  margin: 1px;
+  border: 1px solid #666;
+}
+
+.modVal {
+  background: #d3d3d3;
+  color: #000;
+}
+
+.modName,
+.modVal {
+  padding: 2px
+}
+
+/* modal  */
+.modal-mask {
+  display: flex !important;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 999;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  opacity: 0;
+  pointer-events: none; 
+  transition: opacity 0.2s ease-out;
+}
+
+.modal-mask.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-box {
+  background-color: #1a1d26;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  max-width: 700px;
+  width: 100%;
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+  transform: translateY(20px);
+  transition: transform 0.2s ease-out;
+}
+
+.modal-mask.open .modal-box {
+  transform: translateY(0);
+}
+
+.modal-content-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  background-color: #0f111a;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  padding: 12px;
+}
+
+.modal-content {
+  font-family: monospace;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: #38bdf8;
+  margin: 0;
+}
+
+.modal-box h3 {
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #94a3b8;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 8px;
+}
+
+.mdl{border-style: dotted;}
+
+</style>
+</head>
+<body>
+
+  <div class="headr" id="headr">
+    <div class="head_wrap">
+      <a id="logo_wrap" href="/" class="logo">Mc_Lighting v3</a>
+      <div id="udp">udp</div>
+    </div>
+  </div>
+
+  <div class="container panel" id="main_panel">
+    <div class="Canvas">
+      <canvas id="mainCanvas" width="333" height="333"></canvas>
+      <div id="mainDragger" class="color-dragger"></div>
+    </div>
+
+    <div class="slider-section">
+      <div class="slider-group">
+        <div class="slider-label-row"><span>Rdeča</span><span id="red_val">128</span></div>
+        <input type="range" id="rng_red" class="slider" min="0" max="255" value="128" oninput="updateSlidersFromUI()">
+      </div>
+      <div class="slider-group">
+        <div class="slider-label-row"><span>Zelena</span><span id="green_val">128</span></div>
+        <input type="range" id="rng_green" class="slider" min="0" max="255" value="128" oninput="updateSlidersFromUI()">
+      </div>
+      <div class="slider-group">
+        <div class="slider-label-row"><span>Modra</span><span id="blue_val">128</span></div>
+        <input type="range" id="rng_blue" class="slider" min="0" max="255" value="128" oninput="updateSlidersFromUI()">
+      </div>
+    </div>
+
+  </div>
+
+  <div class="container hide panel" id="effect_panel">
+
+    <div class="Canvas">
+      <canvas id="effCanvas" width="333" height="333"></canvas>
+      <div id="effDragger" class="color-dragger"></div>
+    </div>
+
+    <div class="slider-section">
+      <div class="slider_div">
+        <div class="sl_info"><span class="sl_svg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+          <path d="M990 500c0 126-42 236-127 330a471 471 0 0 1-313 159v-99c96-13 178-56 244-131 66-74 99-161 99-259s-33-185-99-259-148-118-244-131V11c124 13 229 66 313 159 85 94 127 204 127 330zM188 881l69-70c57 43 121 69 194 79v99c-97-9-185-45-263-108zm-79-333c9 73 36 136 79 192l-70 71C55 733 19 645 10 548h99zm79-290c-43 57-70 121-79 194H10c9-97 45-185 108-263l70 69zm262-148c-72 10-136 36-193 79l-70-69C267 57 355 20 451 11v99zm100 282 145 108-295 221 150-329z" />
+          </svg></span>
+          <span class="sl_val" id="speed_val">R</span>
+        </div>
+        <div class="sl_range">
+          <input type="range" oninput="speed()" class="sl_range update_delay" value="1" id="rng_delay" name="1" min="0" max="255">
+        </div>
+      </div>
+      <div class="slider_div">
+        <div class="sl_info"><span class="sl_svg"><svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 1000 1000">
+          <path d="M998.1 500C998.1 225.3 774.7 1.9 500 1.9S1.9 225.3 1.9 500 225.3 998.1 500 998.1 998.1 774.7 998.1 500zM500 162.5c186 0 337.5 151.5 337.5 337.5S686 837.5 500 837.5v-675z" />
+          </svg></span>
+          <span class="sl_val" id="bright_val">R</span>
+        </div>
+        <div class="sl_range">
+          <input type="range" oninput="brightness()" class="sl_range update_brightness" value="1" id="rng_brightness" name="1" min="1" max="254">
+        </div>
+      </div>
+    </div>
+
+    <div id="btn_modes">
+        Loading animations...
+    </div>
+
+  </div>
+
+  <div class="container hide panel" id="pallete_panel">
+    <div id="palettes_b" class="palette-container"></div>
+    <div id="palettes_c" class="palette-container"></div>
+  </div>
+
+  <div class="container hide panel" id="strip_config">
+    <div class="sub_mod_box">
+      <label for="ct">Number of LEDs:</label>
+      <input type="number" type="tel" max="2000" id="ct" name="ct" onblur="sendLedNr(this);">
+      <!--  <button class="blue btn" onclick="sendLedNr(this);" >SAVE ledS</button>//-->
+    </div>
+    <div class="sub_mod_box">
+      <label for="pinnr">PIN number:</label>
+      <select onchange="sendPinNr()" name="pinnr" id="pinnr">
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="12">12</option>
+        <option value="13">13</option>
+        <option value="14">14</option>
+        <option value="15">15</option>
+        <option value="16">16</option>
+      </select>
+      <!--  <button class="blue btn" onclick="sendPinNr(this);" >SAVE pin</button>//-->
+    </div>
+    <div class="sub_mod_box">
+      <label for="rgbo">RGB order:</label>
+      <select onchange="sendRgbOrder()" name="rgbo" id="rgbo">
+        <option name="82" value="82">grb</option>
+        <option name="161" value="161">gbr</option>
+        <option name="6" value="6">rgb</option>
+        <option name="9" value="9">rbg</option>
+        <option name="88" value="88">brg</option>
+        <option name="164" value="164">bgr</option>
+      </select>
+      <!--  <button class="blue btn" onclick="sendRgbOrder(this);" >SAVE rgb</button>//-->
+    </div>
+    <div class="sub_mod_box">
+      <label for="pixtype">Pixel type*:</label>
+      <select onchange="sendPixType()" name="pixtype" id="pixtype">
+        <option name="1" value="1">400khz</option>
+        <option name="2" value="2">800khz</option>
+      </select>
+      <!--  <button class="blue btn" onclick="sendRgbOrder(this);" >SAVE rgb</button>//-->
+    </div>
+
+    <div class="sub_mod_box"> Not final </div>
+
+    <div class="sub_mod_box">
+      <footer class="page-footer blue">
+        <div class="footer-copyright">
+          <div class="foot-wrapper">© 2026 <a class="grey-text text-lighten-4 right" href="https://github.com/toblum/McLighting" target="_blank">Project Home</a>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <div class="container panel hide" id="esp_config">
+
+    <div class="sub_mod_box">
+      <button class="blue btn_link mdl" onclick="prikaziHtml('/pal/edit', 'Palettes Settings')">Edit palettes</button>
+    </div>
+
+    <div class="sub_mod_box">
+      <button class="orange btn_link mdl" onclick="prikaziHtml('/udp.html', 'UDP Settings')">UDP sync</button>
+    </div>
+
+    <div class="sub_mod_box">
+      <button class="cyan btn_link mdl" onclick="prikaziHtml('/brd', 'Edit Board Settings')">Board type</button>
+    </div>
+
+    <div class="sub_mod_box">
+      <button class="green btn_link mdl" onclick="prikaziHtml('/esp/fw', 'Firmware Settings')">Firmware update</button>
+    </div>
+
+    <div class="sub_mod_box">
+      <button class="yellow btn_link mdl" onclick="prikaziHtml('/wifi/edit_ap', 'WiFi Settings')">Edit WiFi</button>
+    </div>
+
+    <div class="sub_mod_box">
+      <button class="btn_link mdl" onclick="window.location.href='/edit'">Edit FileSystem</button>
+    </div>
+    <!--<div class="sub_mod_box">
+      <button class="red btn_link" onclick="window.location.href='/rs_wlan'">*Reset wlan*</button>
+    </div>-->
+
+    <div class="sub_mod_box">
+      <button class="red btn_link" onclick="reboot()">Restart board</button>
+    </div>
+
+  </div>
+
+  <div class="container panel hide" id="esp_status">
+    <div class="gr_head">ESP Status <div id="espstatus" class="grid">30sec refresh</div></div>
+  </div>
+
+    <div class="container panel hide" id="s_strips">
+      <div class="gr_head">Strip State <div id="strips" class="grid" style="padding-top:10px;"></div></div>
+      <div class="gr_head">Strip Config <div id="stripconfig" class="grid" style="padding-top:10px;"></div></div>
+    </div>
+    
+
+  <div class="tab-bar">
+    <div class="dropup">
+      <div class="svg-icon gear dropbtn">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+          <path d="m44 575 65 1c10 50 29 99 58 143l-46 46a42 42 0 0 0 0 60l50 51c16 16 43 16 60 0l46-46c44 30 93 50 143 60l-1 65c0 24 19 43 43 43h71c23 1 42-18 42-42l1-65c50-10 99-29 143-58l46 46c17 17 43 17 60 0l51-50c16-16 16-43 0-60l-46-46c30-44 50-93 60-143l65 1c24 0 43-19 43-43v-71c1-23-18-42-42-42l-65-1c-10-50-29-99-58-143l46-46c17-17 17-43 0-60l-50-51a42 42 0 0 0-60 0l-46 46c-44-30-93-50-143-60l1-65c0-24-19-43-43-43h-71c-23-1-42 18-42 42l-1 65c-50 10-99 29-143 58l-46-46a42 42 0 0 0-60 0l-51 50a42 42 0 0 0 0 60l46 46c-30 44-50 93-60 143l-65-1c-24 0-43 19-43 43v71c-1 23 18 42 42 42zm322-210a189 189 0 1 1 267 269 189 189 0 0 1-267-269z" id="gear" />
+        </svg>
+        <div class="dropup-content">
+          <a class="link" onclick="openTab(event, 'strip_config')">Strip Config</a>
+          <a class="link" onclick="openTab(event, 's_strips')">Strip state</a>
+          <a class="link" onclick="openTab(event, 'esp_status')">ESP Status</a>
+          <a class="link" onclick="openTab(event, 'esp_config')">ESP Config</a>
+        </div>
+      </div>
+    </div>
+
+    <div id="spiny" class="svg-icon home" onclick="openTab(event, 'main_panel')">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
+        <g class="spin">
+          <path fill="#fefe33" d="M492 185a239 239 0 0 1 0 130l-25 14-217-79 220-78 22 13z" />
+          <path fill="#fb9902" d="M315 9c44 12 79 32 112 64v25L250 250l43-229 22-12z" />
+          <path fill="#fabc02" d="M427 73a239 239 0 0 1 65 112l-242 65L427 73z" />
+          <path fill="#fe2712" d="M73 73A239 239 0 0 1 185 9l26 16 39 225L73 100V73z" />
+          <path fill="#fd5308" d="M185 9a239 239 0 0 1 130 0l-65 241L185 9z" />
+          <path fill="#8601af" d="M9 315a239 239 0 0 1 0-130l27-18 214 83-214 79-27-14z" />
+          <path fill="#a7194b" d="M9 185c12-44 32-79 64-112l177 177L9 185z" />
+          <path fill="#0247fe" d="M185 492a239 239 0 0 1-112-65l2-28 175-149-39 230-26 12z" />
+          <path fill="#3d01a4" d="M73 427A239 239 0 0 1 9 315l241-65L73 427z" />
+          <path fill="#66b032" d="M427 427a239 239 0 0 1-112 65l-24-16-41-226 176 151 1 26z" />
+          <path fill="#0391ce" d="M315 492a239 239 0 0 1-130 0l65-242 65 242z" />
+          <path fill="#d0ea2b" d="M492 315a239 239 0 0 1-65 112L250 250l242 65z" />
+        </g>
+        <circle cx="250" cy="250" r="153.8" fill="#fff" stroke="#fff" stroke-width="30" id="svg_status_color" />
+      </svg>
+    </div>
+
+    <div class="svg-icon modes" onclick="openTab(event, 'effect_panel')">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+        <g class="spins">
+          <path fill="red" d="M62 15a57 57 0 0 0-22 110c2-25 20-45 43-51v-2c0-16 7-31 18-42a57 57 0 0 0-39-15" />
+          <path fill="#0F0" d="M140 15c-15 0-29 6-39 15a57 57 0 0 1 18 46c20 9 34 28 35 51a57 57 0 0 0-14-112" />
+          <path fill="#FF0" d="M101 30a57 57 0 0 0-18 44 57 57 0 0 1 36 2v-4c0-16-7-31-18-42" />
+          <path fill="#00F" d="M101 114a57 57 0 0 1-61 11v4a57 57 0 1 0 114-2 57 57 0 0 1-53-13" />
+          <path fill="#F0F" d="M83 74c-23 6-41 26-43 51a57 57 0 0 0 61-11 57 57 0 0 1-18-40" />
+          <path fill="#0FF" d="M119 76c-1 15-8 28-18 38a57 57 0 0 0 53 13c-1-23-15-42-35-51" />
+          <path fill="#FFF" d="m97 72-14 2c0 15 7 30 18 40 10-10 17-23 18-38-7-2-14-4-22-4" />
+        </g>
+      </svg>
+    </div>
+
+    <div class="svg-icon palletes" onclick="openTab(event, 'pallete_panel')">
+      <svg xmlns="http://w3.org" viewBox="0 0 200 200">
+        <rect x="20" y="30" width="30" height="140" rx="8" fill="#ff4757"></rect>
+        <rect x="65" y="30" width="30" height="140" rx="8" fill="#2ed573"></rect>
+        <rect x="110" y="30" width="30" height="140" rx="8" fill="#1e90ff"></rect>
+        <rect x="155" y="30" width="30" height="140" rx="8" fill="#ffa502"></rect>
+      </svg>
+    </div>
+
+  </div>
+
+
+<!-- Modal -->
+<div id="customModal" class="modal-mask">
+  <div class="modal-box">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 8px; margin-bottom: 12px;">
+      <h3 id="modalTitle" style="margin: 0;">Info</h3>
+      <div id="modalClose" style="cursor: pointer; color: #94a3b8; font-weight: bold;">X</div>
+    </div>
+    <div class="modal-content-wrapper">
+      <!-- prikaziJson -->
+      <pre id="modalContent" class="modal-content">{"status": "uspešno", "podatki": "my JSON"}</pre>
+      <!-- prikaziHtml -->
+      <iframe 
+        id="modalIframe" 
+        style="display:none; width:100%; height:100%; border:none; background:transparent;" 
+        sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation">
+      </iframe>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  var host = window.location.hostname;
+
+  var websock;
+  var ws_url = 'ws://' + host + '/ws';
+  var ws_waiting = 0;
+
+  var wheelMain;
+  var wheelEff;
+
+  var modal = document.getElementById('customModal');
+  var modalClose = document.getElementById('modalClose');
+  var mTitle = document.getElementById('modalTitle');
+  var mContent = document.getElementById('modalContent');
+
+    initWebSocket();
+
+//placeToast
+const MAX_TOASTS = 10;
+const TOAST_POSITION = 'top-right'; 
+const TOAST_SHOW = 2000; 
+
+document.addEventListener("DOMContentLoaded", function() {
+  wheelMain = new ColorWheel("mainCanvas", "mainDragger", function(hexColor, rgb) {
+    console.log("wheelMain: ", hexColor);
+    wsSetStaticColor(hexColor);
+    updateSliderValuesUI(rgb[0], rgb[1], rgb[2]);
+    if (wheelEff) {
+      wheelEff.setMarkerFromRGB(rgb[0], rgb[1], rgb[2]);
+    }
+  });
+  wheelEff = new ColorWheel("effCanvas", "effDragger", function(hexColor, rgb) {
+    console.log("wheelEff: ", hexColor);
+    wsSetEffectColor(hexColor);
+    updateSliderValuesUI(rgb[0], rgb[1], rgb[2]);
+    if (wheelMain) {
+      wheelMain.setMarkerFromRGB(rgb[0], rgb[1], rgb[2]);
+    }
+  });
+
+    if (typeof GetStripConfig === "function") GetStripConfig();
+    if (typeof GetStripState === "function") GetStripState();
+    if (typeof loadCustomPalettes === "function") loadCustomPalettes();
+  //();
+  //GetStripState();
+});
+
+function placeToast(e) {
+  let t = document.querySelector(".toast-container");
+  
+  if (!t) {
+    t = document.createElement("div");
+    t.className = `toast-container ${TOAST_POSITION}`; 
+    document.body.appendChild(t);
+  }
+  let n = document.createElement("div");
+  n.className = "toast black";
+  n.innerHTML = e;
+  
+  t.insertBefore(n, t.firstChild);
+  while (t.childNodes.length > MAX_TOASTS) {
+    t.removeChild(t.lastChild);
+  }
+  setTimeout(function() {
+    if (n.parentNode) {
+      n.classList.add("toast-exit");
+      setTimeout(function() {
+        if (n.parentNode) { n.remove(); }
+        let currentContainer = document.querySelector(".toast-container");
+        if (currentContainer && currentContainer.childNodes.length === 0) {
+          currentContainer.remove();
+        }
+      }, 300);
+    }
+  }, TOAST_SHOW);
+}
+window.placeToast = placeToast;
+
+//tabs
+function openTab(click, openTabId) {
+  var content = document.getElementsByClassName("panel");
+  for (var i = 0; i < content.length; i++) {
+    content[i].style.display = "none";
+    content[i].classList.remove("hide");
+  }
+  var targetTab = document.getElementById(openTabId);
+  if (targetTab) {
+    targetTab.style.display = "block";
+  }
+}
+
+class ColorWheel {
+  constructor(canvasId, draggerId, onColorSelectCallback) {
+    this.canvas = document.getElementById(canvasId);
+    this.dragger = document.getElementById(draggerId);
+    if (!this.canvas) return;
+
+    this.ctx = this.canvas.getContext('2d');
+    this.callback = onColorSelectCallback;
+    this.isDrawing = false;
+    this.canvas.width = 333;
+    this.canvas.height = 333;
+
+    setTimeout(() => {
+      this.drawBaseWheel();
+      this.initEvents();
+      var r = document.getElementById("rng_red") ? document.getElementById("rng_red").value : 128;
+      var g = document.getElementById("rng_green") ? document.getElementById("rng_green").value : 128;
+      var b = document.getElementById("rng_blue") ? document.getElementById("rng_blue").value : 128;
+      this.setMarkerFromRGB(r, g, b);
+    }, 60);
+  }
+
+  drawBaseWheel() {
+    if (!this.ctx || !this.canvas) return;
+    
+    var centerX = this.canvas.width / 2;
+    var centerY = this.canvas.height / 2;
+    var innerRadius = this.canvas.width / 8;
+    var outerRadius = (this.canvas.width - 10) / 2;
+
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    for (var angle = 0; angle <= 360; angle += 0.5) {
+      var startAngle = (angle - 1.5) * Math.PI / 180;
+      var endAngle = (angle + 0.5) * Math.PI / 180;
+      
+      this.ctx.beginPath();
+      this.ctx.moveTo(centerX, centerY);
+      this.ctx.arc(centerX, centerY, outerRadius, startAngle, endAngle, false);
+      this.ctx.closePath();
+      this.ctx.fillStyle = "hsl(" + Math.floor(angle) + ", 100%, 50%)";
+      this.ctx.fill();
+    }
+
+    // krogec
+    this.ctx.beginPath();
+    this.ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI, false);
+    var gradient = this.ctx.createLinearGradient(centerX - innerRadius, centerY, centerX + innerRadius, centerY);
+    gradient.addColorStop(0, "#000000");
+    gradient.addColorStop(1, "#ffffff");
+    this.ctx.fillStyle = gradient;
+    this.ctx.fill();
+    
+    // Notranja obroba
+    this.ctx.lineWidth = 2;
+    this.ctx.strokeStyle = "#000000";
+    this.ctx.stroke();
+    this.ctx.closePath();
+
+    // Zunanja obroba
+    this.ctx.beginPath();
+    this.ctx.arc(centerX, centerY, outerRadius, 0, 2 * Math.PI, false);
+    this.ctx.lineWidth = 4;
+    this.ctx.strokeStyle = "#000000";
+    this.ctx.stroke();
+    this.ctx.closePath();
+  }
+
+  handleSelect(event) {
+    event.preventDefault();
+    var rect = this.canvas.getBoundingClientRect();
+    var x, y;
+
+    if (event.type.startsWith("touch")) {
+        x = Math.round(event.targetTouches[0].pageX - rect.left - window.scrollX);
+        y = Math.round(event.targetTouches[0].pageY - rect.top - window.scrollY);
+    } else {
+        x = Math.round(event.offsetX);
+        y = Math.round(event.offsetY);
+    }
+
+    if (x < 0 || x >= this.canvas.width || y < 0 || y >= this.canvas.height) return;
+    var imgData = this.ctx.getImageData(x, y, 1, 1).data;
+    if (imgData[3] === 0) return; 
+    this.moveDraggerElement(x, y);
+
+    var hexColor = ((1 << 24) + (imgData[0] << 16) + (imgData[1] << 8) + imgData[2]).toString(16).slice(1);
+
+    var status_color_svg = document.getElementById('svg_status_color');
+    if (status_color_svg) status_color_svg.style.fill = "#" + hexColor;
+    if (typeof this.callback === "function") {
+        this.callback(hexColor, imgData);
+    }
+  }
+
+  moveDraggerElement(x, y) {
+    if (!this.dragger) return;
+    var offset = this.dragger.offsetWidth / 2 || 11;
+    requestAnimationFrame(() => {
+      this.dragger.style.left = (x - offset) + "px";
+      this.dragger.style.top = (y - offset) + "px";
+    });
+  }
+
+  setMarkerFromRGB(r, g, b) {
+    r = parseInt(r) || 0;
+    g = parseInt(g) || 0;
+    b = parseInt(b) || 0;
+
+    var rNorm = r / 255; 
+    var gNorm = g / 255; 
+    var bNorm = b / 255;
+    
+    var max = Math.max(rNorm, gNorm, bNorm);
+    var min = Math.min(rNorm, gNorm, bNorm);
+    var h = 0;
+    
+    if (max !== min) {
+      var d = max - min;
+      switch (max) {
+        case rNorm: h = (gNorm - bNorm) / d + (gNorm < bNorm ? 6 : 0); break;
+        case gNorm: h = (bNorm - rNorm) / d + 2; break;
+        case bNorm: h = (rNorm - gNorm) / d + 4; break;
+      }
+      h /= 6;
+    }
+    
+    var angleRadians = (h * 360) * Math.PI / 180;
+    var centerX = this.canvas.width / 2;
+    var centerY = this.canvas.height / 2;
+    var outerRadius = (this.canvas.width - 10) / 2;
+    var innerRadius = this.canvas.width / 8;
+    var markerRadius = innerRadius + (outerRadius - innerRadius) * 0.55;
+
+    var targetX = Math.round(centerX + markerRadius * Math.cos(angleRadians));
+    var targetY = Math.round(centerY + markerRadius * Math.sin(angleRadians));
+
+    this.moveDraggerElement(targetX, targetY);
+  }
+
+  initEvents() {
+    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (isTouch) {
+      this.canvas.addEventListener("touchstart", (e) => this.handleSelect(e));
+      this.canvas.addEventListener("touchmove", (e) => this.handleSelect(e), { passive: false });
+    } else {
+      this.canvas.addEventListener("mousedown", (e) => {
+        this.isDrawing = true;
+        this.handleSelect(e);
+      });
+      this.canvas.addEventListener("mousemove", (e) => {
+        if (this.isDrawing) this.handleSelect(e);
+      });
+      window.addEventListener("mouseup", () => {
+        this.isDrawing = false;
+      });
+    }
+  }
+}
+
+function updateSliderValuesUI(r, g, b) {
+  if(document.getElementById("rng_red")) document.getElementById("rng_red").value = r;
+  if(document.getElementById("rng_green")) document.getElementById("rng_green").value = g;
+  if(document.getElementById("rng_blue")) document.getElementById("rng_blue").value = b;
+  if(document.getElementById("red_val")) document.getElementById("red_val").innerText = r;
+  if(document.getElementById("green_val")) document.getElementById("green_val").innerText = g;
+  if(document.getElementById("blue_val")) document.getElementById("blue_val").innerText = b;
+}
+
+function updateSlidersFromUI() {
+  var r = document.getElementById("rng_red").value;
+  var g = document.getElementById("rng_green").value;
+  var b = document.getElementById("rng_blue").value;
+  
+  document.getElementById("red_val").innerText = r;
+  document.getElementById("green_val").innerText = g;
+  document.getElementById("blue_val").innerText = b;
+
+  if (wheelMain) wheelMain.setMarkerFromRGB(r, g, b);
+  if (wheelEff) wheelEff.setMarkerFromRGB(r, g, b);
+
+  var hex = ((1 << 24) + (parseInt(r) << 16) + (parseInt(g) << 8) + parseInt(b)).toString(16).slice(1);
+  wsSetEffectColor(hex);
+}
+
+function GetStripState() {
+  fetch("http://" + host + "/stripstate.json")
+    .then(res => res.ok ? res.json() : null)
+    .then(myObj => {
+      if (!myObj) return;
+
+      var r = parseInt(myObj.r) || 0;
+      var g = parseInt(myObj.g) || 0;
+      var b = parseInt(myObj.b) || 0;
+
+      updateSliderValuesUI(r, g, b);
+
+      var hexColor = componentToHex(r) + componentToHex(g) + componentToHex(b);
+      var status_color_svg = document.getElementById('svg_status_color');
+      if (status_color_svg) status_color_svg.style.fill = "#" + hexColor;
+
+      if (wheelMain) wheelMain.setMarkerFromRGB(r, g, b);
+      if (wheelEff) wheelEff.setMarkerFromRGB(r, g, b);
+
+      if (myObj && myObj.hasOwnProperty('brightness')) {
+          let rngBright = document.getElementById("rng_brightness");
+          let brightVal = document.getElementById("bright_val");
+        if (rngBright) rngBright.value = myObj.brightness;
+        if (brightVal) brightVal.innerText = myObj.brightness;
+      }
+
+      if (myObj && myObj.hasOwnProperty('speed')) {
+          let rngDelay = document.getElementById("rng_delay");
+          let speedVal = document.getElementById("speed_val");
+        if (rngDelay) rngDelay.value = myObj.speed;
+        if (speedVal) speedVal.innerText = myObj.speed;
+      }
+
+      const activeMode = myObj.mode;
+      const pal_idx = myObj.pal_idx;
+      const pal_name = myObj.pal_name;
+
+      const allButtonsMode = document.querySelectorAll(".btn_mode, .btn_mode_static");
+      const allButtonsPalette = document.querySelectorAll(".btn_palette");
+
+      allButtonsMode.forEach(button => {
+        const buttonMode = parseInt(button.getAttribute('data-mode'), 10);
+        if (buttonMode === activeMode) {button.classList.add("btn_active");} else {button.classList.remove("btn_active");}      
+      });
+
+      allButtonsPalette.forEach(button => {
+        const buttonPalette = parseInt(button.getAttribute('data-palette'), 10);
+        if (buttonPalette === pal_idx) {button.classList.add("btn_active");} else {button.classList.remove("btn_active");}
+      });
+
+        var Mkeys = Object.keys(myObj);
+        var Mvalues = Object.values(myObj);
+      let OuTxt = "";
+      for (let i = 0; i < Mkeys.length; i++) {
+        OuTxt += "<div class='mod_box'><div class='modName'>" + 
+        Mkeys[i] + "</div><div class='modVal'>" + 
+        Mvalues[i] + "</div></div>";
+      }
+      
+      var stripsContainer = document.getElementById("strips");
+      if (stripsContainer) stripsContainer.innerHTML = OuTxt;
+      
+    })
+      .catch(err => console.error("Napaka pri pridobivanju stanja s strežnika:", err));
+}
+
+
+function wsSetStaticColor(hexColor) {console.log("Static color:", hexColor); wsSendCommand("*" + hexColor);}
+function wsSetEffectColor(hexColor) {console.log("Effect color:", hexColor); wsSendCommand("#" + hexColor);}
+function wsSendCommand(cmd) {if (websock && websock.readyState === WebSocket.OPEN) {websock.send(cmd); console.log("Send WS:", cmd);} else {console.warn("WS not connected..skip:", cmd);}}
+
+function componentToHex(c) {return ("0" + (Number(c).toString(16))).slice(-2).toUpperCase();}
+function rgbToHex(rgb) {return componentToHex(rgb[0]) + componentToHex(rgb[1]) + componentToHex(rgb[2]);}
+
+function brightness() {
+  var brightnessInput = document.getElementById("rng_brightness");
+  if (brightnessInput) {
+    var brightnessValue = brightnessInput.value;
+    var brightTxT = document.getElementById("bright_val");
+    if (brightTxT) brightTxT.innerText = brightnessValue;
+    wsSendCommand("%" + brightnessValue);
+  }
+}
+
+function speed() {
+  var speedInput = document.getElementById("rng_delay");
+  if (speedInput) {
+    var speedValue = speedInput.value;
+    var speedTxT = document.getElementById("speed_val");
+    if (speedTxT) speedTxT.innerText = speedValue;
+    wsSendCommand("?" + speedValue);
+  }
+}
+
+function initWebSocket() {
+  let nav_id = document.getElementById("headr");
+  if (nav_id) {
+    nav_id.classList.remove('yellow');
+    nav_id.classList.add('red');
+  }
+
+  if (typeof websock !== 'undefined' && websock) {
+    websock.onclose = null; 
+    websock.close();
+  }
+
+  websock = new WebSocket(ws_url);
+  
+  websock.onopen = function() { 
+    console.log("WS povezan"); 
+    placeToast("WS Connected"); 
+    if (nav_id) {
+      nav_id.classList.remove('red', 'yellow');
+    }
+  };
+  
+  websock.onerror = function(error) {
+    console.error("WebSocket napaka:", error); 
+    placeToast("WS err..."); 
+    if (nav_id) {
+      nav_id.classList.remove('red');
+      nav_id.classList.add('yellow'); 
+    }
+  };
+  
+  websock.onclose = function() {
+    console.log("WS prekinjena, retry 2 sec..."); 
+    placeToast("WS OffLinE...");
+    
+    if (nav_id) {
+      nav_id.classList.remove('yellow');
+      nav_id.classList.add('red');
+    }
+    
+    setTimeout(initWebSocket, 2000);
+  };
+
+  websock.onmessage = function(e) {
+    var edata = e.data;
+    console.log('WebSocket DATA: ' + edata);
+    ws_waiting = 0;
+    
+    var checkBox = document.getElementById("onoff");
+    if (checkBox) {
+      if (edata.startsWith('*')) {
+        checkBox.checked = true;
+        console.log("Stikalo (ON)");
+      } else {
+        checkBox.checked = false;
+        console.log("Stikalo (OFF)");
+      }
+    }
+    
+    var isJsonString = edata.trim().startsWith('{');
+
+    try {
+      var jsonStr = JSON.parse(edata);
+      if (jsonStr && jsonStr.hasOwnProperty('info')) {
+        GetEspStatus(jsonStr);
+      } else if (!isJsonString) {
+        placeToast(edata);
+      }
+    } catch (err) {
+      if (!edata.startsWith('*') && !isJsonString) {
+        placeToast(edata);
+      }
+    }
+  };
+}
+
+
+function btn() {
+  const dynamicButtons = document.querySelectorAll(".btn_mode");
+  dynamicButtons.forEach(button => {
+    button.addEventListener("click", function() {
+      const mode = this.getAttribute('data-mode');
+        setMode(mode);
+      dynamicButtons.forEach(btn => {
+        btn.classList.remove("btn_active");
+      });
+      this.classList.add("btn_active");
+    });
+  });
+}
+
+function setMode(mode) {console.log("set Mode: ", mode);wsSendCommand("/" + mode);}
+
+function GetModes() {
+  fetch("http://" + host + "/px/modes")
+  .then(response => {
+    if (!response.ok) throw new Error("network error");
+    return response.json();
+  })
+  .then(myObj => {
+    const modes_html = myObj
+      .filter(current_mode => current_mode.id !== undefined)
+      .map(current_mode => `<button class="btn_mode " data-mode="${current_mode.id}">${current_mode.nm}</button>`)
+      .join('');
+
+    const modesContainer = document.getElementById('btn_modes');
+    if (modesContainer) modesContainer.innerHTML = modes_html;
+    
+    if (typeof btn === "function") btn();
+
+  })
+  .catch(error => {
+    console.error("GetModes napaka:", error);
+    
+  });
+}
+
+
+function fetchAndRenderPalettes() {
+  fetch('/pal/b')
+  .then(response => {
+    if (!response.ok) throw new Error("network error");
+    return response.json();
+  })
+  .then(data => {
+    if (data && data.list) {
+      renderDynamicPaletteButtons(data.list, "b");
+    }
+    
+  })
+  .catch(error => {
+    console.error("Built-in palete Fetch err:", error);
+  });
+}
+
+function loadCustomPalettes() {
+  fetch('/palette.json')
+  .then(response => {
+    if (!response.ok) throw new Error("network error");
+    return response.json();
+  })
+  .then(data => {
+    if (data && data.list) {
+      renderDynamicPaletteButtons(data.list, "c");
+    }
+    
+    triggerFinalStateLoad();
+  })
+  .catch(error => {
+    console.error("Custom palete Fetch err:", error);
+    triggerFinalStateLoad();
+  });
+}
+
+function triggerFinalStateLoad() {
+  if (typeof GetModes === "function") {
+    console.log("Vse naloženo. Končni korak: GetModes()");
+    GetModes();
+  }
+}
+
+
+function renderDynamicPaletteButtons(paletteList, type) {
+  const container = document.getElementById(`palettes_${type}`);
+  if (!container) return;
+  
+  container.innerHTML = '';
+
+  paletteList.forEach(palette => {
+    const btn = document.createElement('button');
+    const wsPrefix = (type === "b") ? "p" : "c";
+
+    btn.className = `palette-btn btn_palette btn_palette_${type}`; 
+    btn.setAttribute('data-palette', palette.id);
+    
+    btn.innerText = palette.nm;
+
+    const colors = palette.clr || ["#555", "#222"];
+    btn.style.background = `linear-gradient(135deg, ${colors.join(', ')})`;
+
+    btn.onclick = () => {
+      if (typeof websock !== 'undefined' && websock.readyState === WebSocket.OPEN) {
+        const wsMessage = `${wsPrefix}${palette.id}`;
+        websock.send(wsMessage);
+        console.log(`palete: ${wsMessage} (${palette.nm})`);
+        
+        document.querySelectorAll(".btn_palette").forEach(b => b.classList.remove("btn_active"));
+        btn.classList.add("btn_active");
+      } else {
+        console.error("WebSocket not connected!");
+      }
+    };
+
+    container.appendChild(btn);
+  });
+}
+
+function reboot() {
+  var rbt = confirm("Reboot module?");
+  if (rbt == true) {
+    notify_Clients("ESP", 'reboot');
+  } else {
+    notify_Clients("ESP", 'Reboot ABORT!');
+  }
+}
+
+function notify_Clients(WHO, aboutWHAT) {
+  var command = WHO + "-" + aboutWHAT;
+  if (typeof wsSendCommand === "function") {
+    wsSendCommand(command);
+  }
+  if (typeof placeToast === "function") {
+    placeToast("WS: " + command, "info");
+  }
+}
+
+function GetStripConfig() {
+  fetch("http://" + host + "/stripconfig.json")
+  .then(response => {
+    if (!response.ok) throw new Error("network error");
+    return response.json();
+  })
+  .then(myObj => {
+
+    var countVal = myObj.count;
+    var rgbVal   = myObj.rgb;
+    var pinVal   = myObj.pin;
+    var typeVal  = myObj.type;
+
+    var ec = document.getElementById("ct");
+    if (ec && countVal !== undefined) ec.value = countVal;
+
+    var ep = document.getElementById("pinnr");
+    if (ep && pinVal !== undefined) {
+      for (var j = 0; j < ep.options.length; j++) {
+        if (ep.options[j].value == pinVal) {
+          ep.selectedIndex = j;
+          break;
+        }
+      }
+    }
+
+    var er = document.getElementById("rgbo");
+    if (er && rgbVal !== undefined) {
+      for (var j = 0; j < er.options.length; j++) {
+        if (er.options[j].value == rgbVal) {
+          er.selectedIndex = j;
+          break;
+        }
+      }
+    }
+
+    var pt = document.getElementById("pixtype");
+    if (pt && typeVal !== undefined) {
+      for (var j = 0; j < pt.options.length; j++) {
+        if (pt.options[j].value == typeVal) {
+          pt.selectedIndex = j;
+          break;
+        }
+      }
+    }
+
+    var Mkeys = Object.keys(myObj);
+    var Mvalues = Object.values(myObj);
+    let OuTxt = "";
+    for (let i = 0; i < Mkeys.length; i++) {
+      OuTxt += "<div class='mod_box'><div class='modName'>" + Mkeys[i] + "</div> <div class='modVal'>" + Mvalues[i] + "</div> </div>";
+    }
+    
+    var stripconfig = document.getElementById("stripconfig");
+    if (stripconfig) {
+        stripconfig.innerHTML = OuTxt;
+    }
+
+    if (typeof fetchAndRenderPalettes === "function") {
+      console.log("Config naložen. Naslednji korak: fetchAndRenderPalettes()");
+      fetchAndRenderPalettes();
+    }
+
+  })
+  .catch(error => {
+    console.error("GetStripConfig err:", error);
+    
+    if (typeof fetchAndRenderPalettes === "function") fetchAndRenderPalettes();
+  });
+}
+
+
+function sendPixType(button) {
+  let e = document.getElementById("pixtype");
+  if (!e) return;
+  postPixelConfig("pixtype=" + encodeURIComponent(e.value));
+}
+
+function sendRgbOrder(button) {
+  let e = document.getElementById("rgbo");
+  if (!e) return;
+  let rgboa = e.options[e.selectedIndex] ? e.options[e.selectedIndex].text : e.value;
+  postPixelConfig("rgbo=" + encodeURIComponent(rgboa));
+}
+
+function sendPinNr(button) {
+  let e = document.getElementById("pinnr");
+  if (!e) return;
+  postPixelConfig("pin=" + encodeURIComponent(e.value));
+}
+
+function sendLedNr(button) {
+  let e = document.getElementById("ct");
+  if (!e) return;
+  postPixelConfig("ct=" + encodeURIComponent(e.value));
+}
+
+function postPixelConfig(bodyData) {
+  fetch("http://" + host + "/px/conf", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: bodyData
+  }).then(response => {
+    if (!response.ok) {
+      throw new Error("Napaka pri komunikaciji z mikrokrmilnikom.");
+    }
+    console.log("config sent:", bodyData);
+  }).catch(error => {
+    console.error("Fetch err:", error);
+    if (typeof placeToast === "function") {
+      placeToast("Shranjevanje ni uspelo!");
+    }
+  });
+}
+
+function GetEspStatus(data) {
+  if (!data || !data.info) return;
+
+  if (data.info.st === "Finish") {
+    console.log("Firmware uspešno naložen! Ponovni zagon naprave... Osveževanje čez 15 sekund.");
+    setTimeout(function() {
+      window.location.reload();
+    }, 10000);
+    return;
+  }
+
+  var espUdp = data.udp;
+  var espInfo = data.info;
+  var hostname = espInfo.name || "ESP Naprava";
+  document.title = hostname;
+  var logoContainer = document.getElementById("logo_wrap");
+  if (logoContainer) {
+    logoContainer.innerHTML = hostname;
+  }
+  var osnova = {
+    "Ime": espInfo.name,
+    "SSID": espInfo.ssid,
+    "SSID QL": espInfo.rssi_ql,
+    "IP": espInfo.ip,
+    "MAC": espInfo.mac,
+    "Board": espInfo.brd,
+    "Različica": espInfo.fw,
+    "Uptime": espInfo.up,
+    "HeapFree": espInfo.ram_free,
+    "heapFrag": espInfo.heap_frag,
+    "mhz": espInfo.mhz,
+    "modul": espInfo.modul,
+    "sub_modul": espInfo.sub_modul
+  };
+  var htmlContent = Object.entries(osnova)
+    .map(([key, value]) => `
+      <div class='mod_box'>
+        <div class='modName'>${key}</div>
+        <div class='modVal'>${value || "-"}</div>
+      </div>
+    `).join('');
+
+  var statusContainer = document.querySelector("#espstatus");
+  if (statusContainer) {
+    statusContainer.innerHTML = htmlContent;
+  }
+
+  if (espUdp && document.getElementById("udp")) {
+    document.getElementById("udp").innerHTML = espUdp.mode;
+  }
+
+}
+
+//modal
+var suroviJson = ""; 
+function openModal() {modal.classList.add('open');}
+function closeModal() {modal.classList.remove('open');
+  var ifrme = document.getElementById('modalIframe');
+  if (ifrme) { ifrme.src = "about:blank";}
+}
+
+function prikaziHtml(pot, naslov) {
+  mTitle.innerText = naslov;
+  mContent.style.display = "none";
+  
+  var ifrme = document.getElementById('modalIframe');
+  ifrme.src = "http://" + host + pot;
+  ifrme.style.display = "block";
+  
+  document.querySelector('.modal-content-wrapper').style.padding = "0";
+  document.querySelector('.modal-content-wrapper').style.overflow = "hidden";
+  
+  openModal();
+}
+
+function prikaziJson(pot, naslov) {
+  document.getElementById('modalIframe').style.display = "none";
+  mContent.style.display = "block";
+  
+  document.querySelector('.modal-content-wrapper').style.padding = "12px";
+  document.querySelector('.modal-content-wrapper').style.overflowY = "auto";
+  
+  mTitle.innerText = naslov;
+  mContent.innerText = "Nalagam podatke...";
+  
+  openModal();
+  
+  fetch("http://" + host + pot).then(function(r) {
+    if (!r.ok) throw new Error("Status: " + r.status);
+    return r.json();
+  }).then(function(d) {
+    suroviJson = JSON.stringify(d, null, 2);
+    mContent.innerText = suroviJson;
+  }).catch(function(e) {
+    suroviJson = "";
+    mContent.innerText = "Napaka pri branju:\n" + e.message;
+  });
+}
+
+function kopirajTekst() {
+  if (!suroviJson) return;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(suroviJson).then(uspeh).catch(napaka);
+  } else {
+    var t = document.createElement("textarea");
+    t.value = suroviJson;
+    document.body.appendChild(t);
+    t.select();
+    try {
+      document.execCommand("copy") ? uspeh() : napaka();
+    } catch (e) {
+      napaka();
+    }
+    document.body.removeChild(t);
+  }
+}
+
+modalClose.addEventListener('click', closeModal);
+window.addEventListener('click', function(e) {
+  if (e.target === modal) {closeModal();}
+});
+
+window.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {closeModal();}
+});
+
+
+</script>
+</body>
+</html>
