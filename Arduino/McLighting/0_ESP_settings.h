@@ -109,6 +109,7 @@ const char* const serverURL_edit_ap       = "/wifi/edit_ap"; // pwd
 const char* const serverURL_wifi_save     = "/wifi/save_ap";
 
 //UDP
+const char* const serverURL_get_HTML      = "/udp";
 const char* const serverURL_get_UDP       = "/udp/get";
 const char* const serverURL_set_UDP       = "/udp/set";
 const char* const serverURL_UDP_list      = "/udp/list";
