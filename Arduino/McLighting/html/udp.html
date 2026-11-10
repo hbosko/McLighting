@@ -124,9 +124,8 @@ body {
 
   <div id="udpModal" class="modal" >
     <div class="modal-content" style="background-color:#282c34; color:#e2e8f0; padding:20px; border-left: 5px solid #ddb65b; border-radius:16px; text-align:center; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
-      <h3 style="color:#ff9800; margin-bottom:15px; font-family:sans-serif;">UDP Sinhronizacija</h3>
+      <h3 style="color:#ff9800; margin-bottom:15px; font-family:sans-serif;">UDP Sync</h3>
       
-      <!-- POPRAVLJENO: Trije čisti radio gumbi z enako vrednostjo atributa 'name' -->
       <div style="margin:4px 0; text-align:left; font-family:sans-serif; display:flex; justify-content: space-around; flex-wrap: wrap; gap: 10px;">
         <label style="font-size:16px; display:flex; align-items:center; cursor:pointer;">
           <input type="radio" name="udp_mode" id="radStandalone" value="standalone" onchange="updateUdpStatus()" style="transform:scale(1.3); margin-right:6px;"> Standalone
@@ -152,7 +151,6 @@ function set_masterSlave() {
   fetch('/udp/get')
     .then(response => response.json())
     .then(data => {
-      // Preverjamo neposredno string "mode"
       if (data.mode === 'master') {
         document.getElementById('radMaster').checked = true;
       } else if (data.mode === 'slave' || data.mode === 'receiver') {
@@ -165,13 +163,11 @@ function set_masterSlave() {
 }
 
 
-// Poenostavljeno pošiljanje na ESP
 function updateUdpStatus() {
   const isMaster = document.getElementById('radMaster').checked;
   const isSlave = document.getElementById('radSlave').checked;
   
   const urlParams = new URLSearchParams();
-  // Če je izbran standalone, bosta master in slave oba poslala vrednost "0"
   urlParams.append('master', isMaster ? "1" : "0");
   urlParams.append('slave', isSlave ? "1" : "0");
 
@@ -227,21 +223,19 @@ function fetchDeviceList() {
       let otherCount = 0;
 
       devices.forEach(device => {
-        // Generiranje stila barve značke glede na način naprave
-        let badgeColor = "#8a94a6"; // standalone / siva
+        let badgeColor = "#8a94a6";
         let badgeText = "Standalone";
         
         if (device.mode === "master") {
-          badgeColor = "#ff9800"; // oranžna za masterja
+          badgeColor = "#ff9800";
           badgeText = "MASTER";
         } else if (device.mode === "slave") {
-          badgeColor = "#00ffca"; // svetlo modra/turkizna za prejemnika
+          badgeColor = "#00ffca";
           badgeText = "RECEIVER";
         }
 
         const badgeHtml = `<span style="font-size:10px; font-weight:bold; padding:2px 6px; background:${badgeColor}; color:#0d0e12; border-radius:4px; margin-left:8px; text-transform:uppercase;">${badgeText}</span>`;
 
-        // Zgradimo HTML element za napravo z dodano značko
         const itemHtml = `
           <div class="device-item ${device.type === targetMatchString ? 'match' : ''}">
             <span>🌐 <b>IP:</b> <a href="http://${device.ip}" target="_blank" style="color:#00ffca; text-decoration:none; font-weight:bold;">${device.ip}</a> ${badgeHtml}</span>
@@ -275,7 +269,6 @@ function fetchDeviceList() {
 }
 
 
-// Sprožitev funkcij ob nalaganju strani
 document.addEventListener("DOMContentLoaded", () => {
   fetchDeviceInfo();
   set_masterSlave();
