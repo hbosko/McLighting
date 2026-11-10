@@ -214,7 +214,7 @@ void CheckPayload(const char* payload, size_t len) {
     ws2812fx_speed = constrain(d, 0, 255);
     Mode = SETSPEED;
 
-    DEBUG_PRINT("Target SPEED set to:: ");
+    DEBUG_PRINT("SPEED set to: ");
     DEBUG_PRINTLN(ws2812fx_speed);
 
     //notifyClients(notify_evt, notify_OK); // DONT sPAM!

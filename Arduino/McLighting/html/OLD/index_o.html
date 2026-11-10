@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mc Lighting v1.5 - Modern</title>
+<style>
+  :root {
+      --bg-color: #121214;
+      --card-bg: #1a1a1e;
+      --text-color: #e1e1e6;
+      --accent-color: #4ea8de;
+      --border-radius: 16px;
+  }
+
+  * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+  }
+
+  .container {
+      width: 100%;
+      max-width: 400px;
+      background: var(--card-bg);
+      padding: 24px;
+      border-radius: var(--border-radius);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      text-align: center;
+  }
+
+  h1 {
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+  }
+
+  /* Power Gumbi */
+  .power-controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+  }
+
+  .btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+  }
+
+  .btn-on {
+      background-color: #06d6a0;
+      color: #121214;
+  }
+
+  .btn-off {
+      background-color: #ef476f;
+      color: #fff;
+  }
+
+  .btn:active {
+      transform: scale(0.98);
+      opacity: 0.9;
+  }
+
+  /* Color Picker sekcija */
+  .picker-container {
+      position: relative;
+      margin: 20px auto;
+      width: 250px;
+      height: 250px;
+  }
+
+  #colorWheel {
+      border-radius: 50%;
+      cursor: crosshair;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+
+  /* Hitre barvne palete (Pravokotniki) */
+  .palette-title {
+      font-size: 0.9rem;
+      color: #8f8f9d;
+      margin: 20px 0 10px 0;
+      text-align: left;
+  }
+
+  .color-palette {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 24px;
+  }
+
+  .color-swatch {
+      flex: 1;
+      height: 35px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 0.1s ease;
+  }
+
+  .color-swatch:hover {
+      transform: scale(1.08);
+  }
+
+  /* Drsniki (Sliders) */
+  .slider-group {
+      margin-bottom: 16px;
+      text-align: left;
+  }
+
+  .slider-group label {
+      display: block;
+      font-size: 0.85rem;
+      color: #8f8f9d;
+      margin-bottom: 6px;
+  }
+
+  .slider {
+      width: 100%;
+      -webkit-appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      background: #2a2a30;
+      outline: none;
+  }
+
+  .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent-color);
+      cursor: pointer;
+  }
+
+  /* Statusna vrstica */
+  .status-bar {
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid #2a2a30;
+      font-size: 0.8rem;
+      color: #6a6a75;
+      display: flex;
+      justify-content: space-between;
+  }
+
+.tab-bar {
+    width: 100%;
+    height: 50px;
+    background-color: var(--nav-bg);
+    border-radius: 20px 20px 0px 0px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+
+  .palette-container {
+    padding: 16px;
+    background: #1e1e24; /* Prilagodi svojemu dark modifikatorju */
+    border-radius: 12px;
+    color: #e1e1e6;
+  }
+
+  .section-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    text-align: left;
+  }
+
+  .section-subtitle {
+    font-size: 0.85rem;
+    color: #8f8f9d;
+    margin-bottom: 20px;
+    text-align: left;
+  }
+
+  /* Mreža kartic: 2 stolpca na telefonih, več na namizju */
+  .palette-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  /* Kartica posamezne palete */
+  .palette-card {
+    background: #2a2a32;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid #3e3e4a;
+  }
+
+  .palette-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+    border-color: #57576a;
+  }
+
+  .palette-card:active {
+    transform: scale(0.97);
+  }
+
+  /* Pravokotnik s prelivom barv (Zgornji del kartice) */
+  .palette-preview {
+    display: flex;
+    height: 50px;
+    width: 100%;
+  }
+
+  .palette-preview span {
+    flex: 1;
+    height: 100%;
+    transition: opacity 0.2s;
+  }
+
+  /* Podatki o paleti (Spodnji del kartice) */
+  .palette-info {
+    padding: 10px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .palette-name {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #ffffff;
+  }
+
+  .palette-desc {
+    font-size: 0.75rem;
+    color: #a4a4b5;
+  }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Mc Lighting v1.5</h1>
+
+    <!-- Glavna stikala -->
+    <div class="power-controls">
+        <button class="btn btn-on" onclick="sendCmd('ON')">VKLOP</button>
+        <button class="btn btn-off" onclick="sendCmd('OFF')">IZKLOP</button>
+    </div>
+
+    <!-- Moderen barvni krog (Canvas) -->
+    <div class="picker-container">
+        <canvas id="colorWheel" width="250" height="250"></canvas>
+    </div>
+
+    <!-- Hitre pravokotne palete -->
+    <p class="palette-title">Hitre barve</p>
+    <div class="color-palette">
+        <div class="color-swatch" style="background: #ff0000;" onclick="selectPreset(255,0,0)"></div>
+        <div class="color-swatch" style="background: #00ff00;" onclick="selectPreset(0,255,0)"></div>
+        <div class="color-swatch" style="background: #0000ff;" onclick="selectPreset(0,0,255)"></div>
+        <div class="color-swatch" style="background: #ffff00;" onclick="selectPreset(255,255,0)"></div>
+        <div class="color-swatch" style="background: #ff00ff;" onclick="selectPreset(255,0,255)"></div>
+        <div class="color-swatch" style="background: #ffffff;" onclick="selectPreset(255,255,255)"></div>
+    </div>
+
+    <!-- Svetlost -->
+    <div class="slider-group">
+        <label for="brightness">Svetlost (Brightness)</label>
+        <input type="range" id="brightness" class="slider" min="0" max="255" value="128" oninput="sendBrightness(this.value)">
+    </div>
+
+    <!-- Status spodaj -->
+    <div class="status-bar">
+        <span>Status: Povezan</span>
+        <span>ESP8266</span>
+    </div>
+
+<div class="palette-container">
+  <h2 class="section-title">Barvne palete</h2>
+  <p class="section-subtitle">Izberi vzdušje za svoj prostor</p>
+
+  <div class="palette-grid">
+    <!-- Paleta 1: Sunset (Sončni zahod) -->
+    <div class="palette-card" onclick="selectPalette('sunset', ['#FF416C', '#FF4B2B', '#FF8C00', '#FFA500'])">
+      <div class="palette-preview">
+        <span style="background: #FF416C;"></span>
+        <span style="background: #FF4B2B;"></span>
+        <span style="background: #FF8C00;"></span>
+        <span style="background: #FFA500;"></span>
+      </div>
+      <div class="palette-info">
+        <span class="palette-name">Sončni zahod</span>
+        <span class="palette-desc">Toplo & Energijsko</span>
+      </div>
+    </div>
+
+    <!-- Paleta 2: Ocean Breeze (Morski vetrič) -->
+    <div class="palette-card" onclick="selectPalette('ocean', ['#00c6ff', '#0072ff', '#0B3C5D', '#328CC1'])">
+      <div class="palette-preview">
+        <span style="background: #00c6ff;"></span>
+        <span style="background: #0072ff;"></span>
+        <span style="background: #0B3C5D;"></span>
+        <span style="background: #328CC1;"></span>
+      </div>
+      <div class="palette-info">
+        <span class="palette-name">Morski vetrič</span>
+        <span class="palette-desc">Sveže & Umirjeno</span>
+      </div>
+    </div>
+
+    <!-- Paleta 3: Cyberpunk / Neon -->
+    <div class="palette-card" onclick="selectPalette('cyberpunk', ['#f107a3', '#7b2ff7', '#00f5d4', '#1b1b2f'])">
+      <div class="palette-preview">
+        <span style="background: #f107a3;"></span>
+        <span style="background: #7b2ff7;"></span>
+        <span style="background: #00f5d4;"></span>
+        <span style="background: #1b1b2f;"></span>
+      </div>
+      <div class="palette-info">
+        <span class="palette-name">Cyberpunk</span>
+        <span class="palette-desc">Futuristično & Živo</span>
+      </div>
+    </div>
+
+    <!-- Paleta 4: Forest Mist (Gozdna meglica) -->
+    <div class="palette-card" onclick="selectPalette('forest', ['#11998e', '#38ef7d', '#134e5e', '#71b280'])">
+      <div class="palette-preview">
+        <span style="background: #11998e;"></span>
+        <span style="background: #38ef7d;"></span>
+        <span style="background: #134e5e;"></span>
+        <span style="background: #71b280;"></span>
+      </div>
+      <div class="palette-info">
+        <span class="palette-name">Gozdna meglica</span>
+        <span class="palette-desc">Naravno & Organsko</span>
+      </div>
+    </div>
+
+    <!-- Paleta 5: Cozy Fire (Domači kamin) -->
+    <div class="palette-card" onclick="selectPalette('fire', ['#cb2d3e', '#ef473a', '#f12711', '#f5af19'])">
+      <div class="palette-preview">
+        <span style="background: #cb2d3e;"></span>
+        <span style="background: #ef473a;"></span>
+        <span style="background: #f12711;"></span>
+        <span style="background: #f5af19;"></span>
+      </div>
+      <div class="palette-info">
+        <span class="palette-name">Topli kamin</span>
+        <span class="palette-desc">Udobno & Sproščujoče</span>
+      </div>
+    </div>
+
+    <!-- Paleta 6: Aurora Borealis -->
+    <div class="palette-card" onclick="selectPalette('aurora', ['#0575E6', '#00F260', '#4a00e0', '#8e2de2'])">
+      <div class="palette-preview">
+        <span style="background: #0575E6;"></span>
+        <span style="background: #00F260;"></span>
+        <span style="background: #4a00e0;"></span>
+        <span style="background: #8e2de2;"></span>
+      </div>
+      <div class="palette-info">
+        <span class="palette-name">Polarni sij</span>
+        <span class="palette-desc">Mistično & Dinamično</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<div class="tab-bar">
+  <!-- Nastavitve (Zobnik) -->
+  <div class="dropup">
+    <div class="svg-icon gear dropbtn">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+        <path d="m44 575 65 1c10 50 29 99 58 143l-46 46a42 42 0 0 0 0 60l50 51c16 16 43 16 60 0l46-46c44 30 93 50 143 60l-1 65c0 24 19 43 43 43h71c23 1 42-18 42-42l1-65c50-10 99-29 143-58l46 46c17 17 43 17 60 0l51-50c16-16 16-43 0-60l-46-46c30-44 50-93 60-143l65 1c24 0 43-19 43-43v-71c1-23-18-42-42-42l-65-1c-10-50-29-99-58-143l46-46c17-17 17-43 0-60l-50-51a42 42 0 0 0-60 0l-46 46c-44-30-93-50-143-60l1-65c0-24-19-43-43-43h-71c-23-1-42 18-42 42l-1 65c-50 10-99 29-143 58l-46-46a42 42 0 0 0-60 0l-51 50a42 42 0 0 0 0 60l46 46c-30 44-50 93-60 143l-65-1c-24 0-43 19-43 43v71c-1 23 18 42 42 42zm322-210a189 189 0 1 1 267 269 189 189 0 0 1-267-269z" id="gear" fill="currentColor"></path>
+      </svg>
+      <div class="dropup-content">
+        <a class="link" onclick="openTab(event, 'm_config')">Strip Config</a>
+        <a class="link" onclick="openTab(event, 's_neoconfig')">Neo status</a>
+        <a class="link" onclick="openTab(event, 'wf_status')">Satus</a>
+        <a class="link" onclick="openTab(event, 's_strips')">Strip state</a>
+        <a class="link" onclick="openTab(event, 'esp_status')">ESP Satus</a>
+        <a class="link" onclick="openTab(event, 'esp_config')">ESP Config</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Glavno krmilo (Moderniziran krog z večjim sredinskim prikazom statusa) -->
+  <div id="spin" class="svg-icon home" onclick="openTab(event, 'pane1')" style="position: relative; overflow: visible;">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" style="transform: scale(1.15); transition: transform 0.2s ease;">
+      <!-- Zunanji barvni izseki ostanejo, saj dajejo odličen retro pridih -->
+      <path fill="#fefe33" d="M492 185a239 239 0 0 1 0 130l-25 14-217-79 220-78 22 13z"></path>
+      <path fill="#fb9902" d="M315 9c44 12 79 32 112 64v25L250 250l43-229 22-12z"></path>
+      <path fill="#fabc02" d="M427 73a239 239 0 0 1 65 112l-242 65L427 73z"></path>
+      <path fill="#fe2712" d="M73 73A239 239 0 0 1 185 9l26 16 39 225L73 100V73z"></path>
+      <path fill="#fd5308" d="M185 9a239 239 0 0 1 130 0l-65 241L185 9z"></path>
+      <path fill="#8601af" d="M9 315a239 239 0 0 1 0-130l27-18 214 83-214 79-27-14z"></path>
+      <path fill="#a7194b" d="M9 185c12-44 32-79 64-112l177 177L9 185z"></path>
+      <path fill="#0247fe" d="M185 492a239 239 0 0 1-112-65l2-28 175-149-39 230-26 12z"></path>
+      <path fill="#3d01a4" d="M73 427A239 239 0 0 1 9 315l241-65L73 427z"></path>
+      <path fill="#66b032" d="M427 427a239 239 0 0 1-112 65l-24-16-41-226 176 151 1 26z"></path>
+      <path fill="#0391ce" d="M315 492a239 239 0 0 1-130 0l65-242 65 242z"></path>
+      <path fill="#d0ea2b" d="M492 315a239 239 0 0 1-65 112L250 250l242 65z"></path>
+      
+      <!-- Moderniziran sredinski krog: dodan nežnejši prehod (bela obroba) in bolj izrazit prikaz trenutne barve -->
+      <circle cx="250" cy="250" r="160" fill="#222" stroke="#ffffff" stroke-width="25"></circle>
+      <circle cx="250" cy="250" r="135" id="svg_status_color" style="fill: rgb(255, 0, 8); transition: fill 0.3s ease;"></circle>
+    </svg>
+  </div>
+
+  <!-- Načini delovanja (3 prekrivajoči krogi) -->
+  <div class="svg-icon modes" onclick="openTab(event, 'pane2')">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+      <path fill="red" d="M62 15a57 57 0 0 0-22 110c2-25 20-45 43-51v-2c0-16 7-31 18-42a57 57 0 0 0-39-15"></path>
+      <path fill="#0F0" d="M140 15c-15 0-29 6-39 15a57 57 0 0 1 18 46c20 9 34 28 35 51a57 57 0 0 0-14-112"></path>
+      <path fill="#FF0" d="M101 30a57 57 0 0 0-18 44 57 57 0 0 1 36 2v-4c0-16-7-31-18-42"></path>
+      <path fill="#00F" d="M101 114a57 57 0 0 1-61 11v4a57 57 0 1 0 114-2 57 57 0 0 1-53-13"></path>
+      <path fill="#F0F" d="M83 74c-23 6-41 26-43 51a57 57 0 0 0 61-11 57 57 0 0 1-18-40"></path>
+      <path fill="#0FF" d="M119 76c-1 15-8 28-18 38a57 57 0 0 0 53 13c-1-23-15-42-35-51"></path>
+      <path fill="#FFF" d="m97 72-14 2c0 15 7 30 18 40 10-10 17-23 18-38-7-2-14-4-22-4"></path>
+    </svg>
+  </div>
+
+  <!-- NOVO: Palete (Pravokotna ikona z barvnimi črtami za pane3) -->
+  <div class="svg-icon palletes" onclick="openTab(event, 'pane3')">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+      <!-- 4 simetrični navpični pravokotniki, ki ponazarjajo izbiro barvnih palet -->
+      <rect x="20" y="30" width="30" height="140" rx="8" fill="#ff4757"></rect>
+      <rect x="65" y="30" width="30" height="140" rx="8" fill="#2ed573"></rect>
+      <rect x="110" y="30" width="30" height="140" rx="8" fill="#1e90ff"></rect>
+      <rect x="155" y="30" width="30" height="140" rx="8" fill="#ffa502"></rect>
+    </svg>
+  </div>
+</div>
+
+
+</div>
+
+<script>
+    const canvas = document.getElementById('colorWheel');
+    const ctx = canvas.getContext('2d');
+    const radius = canvas.width / 2;
+    let sendTimeout;
+
+    // Izris čudovitega gladkega barvnega kroga
+    for (let angle = 0; angle < 360; angle++) {
+        const startAngle = (angle - 1) * Math.PI / 180;
+        const endAngle = (angle + 1) * Math.PI / 180;
+        ctx.beginPath();
+        ctx.moveTo(radius, radius);
+        ctx.arc(radius, radius, radius, startAngle, endAngle);
+        ctx.closePath();
+        
+        const gradient = ctx.createRadialGradient(radius, radius, 0, radius, radius, radius);
+        gradient.addColorStop(0, 'white');
+        gradient.addColorStop(1, `hsl(${angle}, 100%, 50%)`);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+    }
+
+    // Lovljenje klikov in vlečenja po krogu
+    function handleColorSelect(e) {
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX || e.touches[0].clientX) - rect.left;
+        const y = (e.clientY || e.touches[0].clientY) - rect.top;
+        
+        // Pridobi RGB podatke iz piksla na canvasu
+        const imgData = ctx.getImageData(x, y, 1, 1).data;
+        
+        // Če smo kliknili znotraj kroga (prosojnost ni 0)
+        if (imgData[3] > 0) {
+            debounceColor(imgData[0], imgData[1], imgData[2]);
+        }
+    }
+
+    canvas.addEventListener('mousedown', () => canvas.addEventListener('mousemove', handleColorSelect));
+    window.addEventListener('mouseup', () => canvas.removeEventListener('mousemove', handleColorSelect));
+    canvas.addEventListener('click', handleColorSelect);
+    
+    // Podpora za telefone (Touch)
+    canvas.addEventListener('touchmove', handleColorSelect);
+
+    // Hitra izbira preko pravokotnih palet
+    function selectPreset(r, g, b) {
+        console.log(`Preset: R:${r} G:${g} B:${b}`);
+        sendColorToServer(r, g, b);
+    }
+
+    // Debounce funkcija, da ne preobremenimo ESP-ja med vlečenjem
+    function debounceColor(r, g, b) {
+        clearTimeout(sendTimeout);
+        sendTimeout = setTimeout(() => {
+            sendColorToServer(r, g, b);
+        }, 50); // Pošlji podatke maksimalno enkrat na 50ms
+    }
+
+    // Tukaj povežeš s svojim obstoječim Mc Lighting API-jem (WebSocket ali HTTP)
+    function sendColorToServer(r, g, b) {
+        console.log(`Pošiljam na ESP -> R: ${r}, G: ${g}, B: ${b}`);
+        // Primer za HTTP API: fetch(`/set?r=${r}&g=${g}&b=${b}`);
+    }
+
+    function sendBrightness(val) {
+        console.log(`Svetlost: ${val}`);
+        // Primer za HTTP API: fetch(`/set?brightness=${val}`);
+    }
+
+    function sendCmd(cmd) {
+        console.log(`Ukaz: ${cmd}`);
+        // Primer za HTTP API: fetch(`/cmd?power=${cmd}`);
+    }
+</script>
+
+</body>
+</html>

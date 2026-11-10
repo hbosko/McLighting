@@ -1,3 +1,4 @@
+
 const uint8_t gGradientPaletteCount = 3;
 
 const char* const gGradientPaletteNames[] PROGMEM = {

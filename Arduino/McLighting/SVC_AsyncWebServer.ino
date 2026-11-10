@@ -7,6 +7,7 @@ void custom_webserver_path(){
     serverOn_UDP();
   #endif
 
+/* 
   server.on("/px/modes", HTTP_GET, [](AsyncWebServerRequest *request) {
     AsyncWebServerResponse *response = request->beginChunkedResponse("application/json", [](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
       static uint16_t currentMode = 0;
@@ -45,15 +46,15 @@ void custom_webserver_path(){
     response->addHeader("Access-Control-Allow-Origin", "*");
     request->send(response);
   });
-
-    /* // OOM!
-      server.on(serverURL_getModes, HTTP_GET, [](AsyncWebServerRequest * request) {
-        AsyncResponseStream *response = request->beginResponseStream("application/json");
-        //palette_json(*response); //FASTLED
-        listModesJSON(*response); //ws2812
-        request->send(response);
-      });
-    */
+*/
+    // OOM!
+  server.on(serverURL_getModes, HTTP_GET, [](AsyncWebServerRequest * request) {
+    AsyncResponseStream *response = request->beginResponseStream("application/json");
+    //palette_json(*response); //FASTLED
+    listModesJSON(*response); //ws2812
+    request->send(response);
+  });
+    
     //save strip settings
   server.on(serverURL_strip_state, HTTP_POST, handle_strip_state);
 

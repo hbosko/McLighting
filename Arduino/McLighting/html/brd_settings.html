@@ -1,0 +1,296 @@
+<!doctypehtml>
+<html lang=sl>
+<meta charset=UTF-8>
+<meta content="width=device-width,initial-scale=1" name=viewport>
+<title>ESP Konfig</title>
+<style>
+:root {
+  --bg-main: #0b0f19;
+  --bg-card: #151b2c;
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --accent: #38bdf8;
+  --accent-hover: #0ea5e9;
+  --border: #242f47;
+  --radius: 12px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --led-dis: #64748b;
+  --led-loading: #f59e0b;
+  --led-ok: #10b981; 
+  --led-err: #ef4444;
+}
+
+* {box-sizing: border-box;  margin: 0;  padding: 0;}
+body {font-family: var(--font);  background-color: var(--bg-main);  color: var(--text-main);  display: flex;  justify-content: center;  align-items: center;  min-height: 100vh;  padding: 20px;}
+.container {background-color: var(--bg-card);  border: 1px solid var(--border);  border-radius: var(--radius);  padding: 32px;  width: 100%;  max-width: 420px;  box-shadow: 0 20px 40px rgba(0, 0, 0, .4);  position: relative}
+h2 {font-size: 1.4rem;  font-weight: 600;  letter-spacing: -.025em;  background: linear-gradient(to right, #fff, var(--text-muted));  background-clip: text;  -webkit-background-clip: text;  -webkit-text-fill-color: transparent}
+.status-led  {width: 10px;  height: 10px;  border-radius: 50%;  background-color: var(--led-loading);  box-shadow: 0 0 8px var(--led-loading);  display: inline-block}
+.group {margin-bottom:20px}
+label {display: block;  font-size: .82rem;  font-weight: 500;  color: var(--text-muted);  text-transform: uppercase;  letter-spacing: .05em}
+input,select {width: 100%;  padding: 10px;  background-color: var(--bg-main);  border: 1px solid var(--border);  border-radius: 8px;  color: var(--text-main);  font-family: var(--font);  font-size: .95rem;  outline: 0;  -webkit-appearance: none;  -moz-appearance: none;  appearance: none}
+select {padding-right: 40px;cursor: pointer}
+input:focus,select:focus {border-color: var(--accent);box-shadow: 0 0 0 3px rgba(56, 189, 248, .15)}
+input::placeholder {color: #334155}
+button {width: 100%;  background-color: var(--accent);  color: #040811;  border: none;  border-radius: 8px;  font-family: var(--font);  font-size: .95rem;  font-weight: 600;  padding: 5px;  cursor: pointer;  box-shadow: 0 4px 12px rgba(56, 189, 248, .25)}
+button:hover { background-color: var(--accent-hover); box-shadow: 0 6px 16px rgba(56, 189, 248, .35)}
+.btn-default{flex: 1; background-color: rgba(239, 68, 110, 0.15); color: #ef446e; border: 1px solid rgba(239, 68, 110, 0.3);}
+.btn-save{flex: 2; margin-top: 0}
+.hidden {display: none !important}
+input[id^=input_] {font-style: italic;letter-spacing: .03em}
+.container {background-color: #1a1d26;border: 1px solid rgba(255, 255, 255, 0.08);border-radius: 16px;padding: 10px;box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);}
+.header-wrap {display: flex;align-items: center;justify-content: space-between;border-bottom: 1px solid rgba(255, 255, 255, 0.05);padding-bottom: 10px;}
+.header-wrap h2 {font-size: 1.1rem;text-transform: uppercase;letter-spacing: 1px;color: #94a3b8;}
+.group {display: flex;flex-direction: column;gap: 6px;margin-bottom: 10px;}
+.group label {padding-top: 5px;font-weight: 700;color: #b9bec5;text-transform: uppercase;letter-spacing: 1px;}
+.group select, .group input[type="number"], .group input[type="text"] {background-color: #0f111a;border: 1px solid rgba(255, 255, 255, 0.08);border-radius: 8px;color: #f1f3f9;font-family: inherit;width: 100%;}
+.group select:focus, .group input:focus {border-color: #38bdf8;box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);outline: 0;}
+.pin-grid {display: grid;grid-template-columns: repeat(2, 1fr);gap: 10px;}
+.pin-section{margin-top:10px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-bottom:10px;}
+.hidden {display: none !important;}
+.status-led {width: 12px;height: 12px;border-radius: 50%;transition: background-color 0.3s, box-shadow 0.3s;}
+.conflict {border-color: var(--led-err, #ef446e) !important;box-shadow: 0 0 10px rgba(239, 68, 110, 0.3) !important;background-color: rgba(239, 68, 110, 0.05) !important;}
+</style>
+
+
+<div class="container">
+  <div class="header-wrap">
+    <h2>Nastavitve</h2>
+    <div class="status-led" id="led" title="Povezovanje..."></div>
+  </div>
+  
+  <div class="group">
+    <label for="select_TYPE">Type</label>
+    <select id="select_TYPE" onchange='handleToggle("TYPE",!0)'>
+      <option value="">...</option>
+    </select>
+    <input class="hidden" id="input_TYPE" placeholder="Enter text for custom..." style="text-transform:uppercase">
+  </div>
+  
+  <div class="group">
+    <label for="select_SUB_TYPE">Sub-type</label>
+    <select id="select_SUB_TYPE" onchange='handleToggle("SUB_TYPE",!0)'>
+      <option value="">...</option>
+    </select>
+    <input class="hidden" id="input_SUB_TYPE" placeholder="Enter text for custom..." style="text-transform:uppercase">
+  </div>
+
+  <div class="pin-section">
+    <div class="pin-grid">
+      <div class="group"><label for="pin_sda">I2C SDA Pin</label><input type="number" id="pin_sda" min="-1" max="127"></div>
+      <div class="group"><label for="pin_scl">I2C SCL Pin</label><input type="number" id="pin_scl" min="-1" max="127"></div>
+      <div class="group"><label for="pin_dallas">Dallas Pin</label><input type="number" id="pin_dallas" min="-1" max="127"></div>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 15px; margin-top:10px;">
+    <button onclick="default_settings(this,'default')" class="btn-default">Default Settings</button>
+    <button onclick="save_settings()" class="btn-save">SAVE</button>
+  </div>
+</div>
+
+<script>
+  let TYPE_MAP = {}, SUB_TYPE_MAP = {};
+
+  function setLED(e, t) {
+    const n = document.getElementById("led");
+    n && (n.title = t, "ok" === e ? (n.style.backgroundColor = "var(--led-ok)", n.style.boxShadow = "0 0 10px var(--led-ok)") : "error" === e ? (n.style.backgroundColor = "var(--led-err)", n.style.boxShadow = "0 0 10px var(--led-err)") : "loading" === e && (n.style.backgroundColor = "var(--led-loading)", n.style.boxShadow = "0 0 10px var(--led-loading)"))
+  }
+
+  function parsePinToUI(val) {
+    return (val === undefined || val === null) ? -1 : val;
+  }
+
+  async function fetchSettings() {
+    setLED("loading", "Nalagam podatke...");
+    try {
+      const s = await fetch("/brd/json");
+      if (!s.ok) throw new Error(`Napaka /brd/json [Status: ${s.status}]`);
+      var t = await s.json();
+      TYPE_MAP = t.TYPE || {}, SUB_TYPE_MAP = t.SUB_TYPE || {};
+      let e = {};
+      try {
+        const l = await fetch("/esp.json");
+        l.ok ? (e = await l.json(), console.log("shranjene nastavitve:", e)) : console.warn("/esp.json ne obstaja.")
+      } catch (e) {
+        console.warn("Ni mogoče prebrati /esp.json", e)
+      }
+      
+      var n = e.type?.type ?? t.type?.type,
+        o = e.type?.sub_type ?? t.type?.sub_type,
+        a = e.custom?.c_type ?? t.custom?.c_type ?? "",
+        r = e.custom?.c_sub_type ?? t.custom?.c_sub_type ?? "";
+        
+      fillSelect("select_TYPE", TYPE_MAP, n);
+      fillSelect("select_SUB_TYPE", SUB_TYPE_MAP, o);
+      document.getElementById("input_TYPE").value = a;
+      document.getElementById("input_SUB_TYPE").value = r;
+      handleToggle("TYPE", !1);
+      handleToggle("SUB_TYPE", !1);
+
+      document.getElementById("pin_dallas").value = parsePinToUI(e.pin?.dallas);
+      document.getElementById("pin_sda").value     = parsePinToUI(e.pin?.sda);
+      document.getElementById("pin_scl").value     = parsePinToUI(e.pin?.scl);
+
+      setLED("ok", "Povezano. Vse nastavitve naložene.");
+    } catch (e) {
+      setLED("error", "Napaka pri nalaganju: " + e.message);
+      console.error(e);
+    }
+  }
+
+  function fillSelect(e, t, n) {
+    const o = document.getElementById(e);
+    if (o) {
+      o.innerHTML = "";
+      if (0 === Object.keys(t).length) {
+        let e = document.createElement("option");
+        e.value = ""; e.innerText = "Ni podatkov"; o.appendChild(e);
+        return;
+      }
+      for (var a in t) {
+        let e = document.createElement("option");
+        e.value = a; e.innerText = t[a]; 
+        if (String(a) === String(n)) e.selected = !0;
+        o.appendChild(e);
+      }
+    }
+  }
+
+  function handleToggle(e, t = !1) {
+    var n = document.getElementById("select_" + e);
+    const o = document.getElementById("input_" + e);
+    if (n && o) {
+      if ("99" === String(n.value)) {
+        o.classList.remove("hidden");
+        o.style.backgroundColor = "#0f2035";
+        o.style.borderColor = "var(--accent)";
+        if (t) o.focus();
+      } else {
+        o.classList.add("hidden");
+      }
+    }
+  }
+
+  async function save_settings() {
+    const pinIds = ["pin_dallas", "pin_sda", "pin_scl"];
+    let usedPins = {};
+
+    pinIds.forEach(id => document.getElementById(id).classList.remove("conflict"));
+
+    for (let id of pinIds) {
+      let inputEl = document.getElementById(id);
+      let val = parseInt(inputEl.value);
+      
+      if (!isNaN(val) && val >= 0 && val <= 127) {
+        if (usedPins[val]) {
+          let prejsnjiInput = document.getElementById(usedPins[val]);
+          let prejsnjePolje = prejsnjiInput.previousElementSibling.innerText;
+          let trenutnoPolje = inputEl.previousElementSibling.innerText;
+          
+          prejsnjiInput.classList.add("conflict");
+          inputEl.classList.add("conflict");
+
+          setLED("error", `Podvojen pin GPIO ${val}! Nastavljen na "${prejsnjePolje}" in "${trenutnoPolje}".`);
+          return; 
+        }
+        usedPins[val] = id;
+      }
+    }
+
+    setLED("loading", "Shranjujem nastavitve...");
+    var e = document.getElementById("select_TYPE").value,
+      t = document.getElementById("select_SUB_TYPE").value,
+      n = document.getElementById("input_TYPE").value.toUpperCase(),
+      o = document.getElementById("input_SUB_TYPE").value;
+
+    var dataObject = {
+      type: { type: parseInt(e) || 0, sub_type: parseInt(t) || 0 },
+      custom: { c_type: "99" === e ? n : "", c_sub_type: "99" === t ? o : "" },
+      pin: {
+        dallas: validatePinForESP("pin_dallas"),
+        sda:    validatePinForESP("pin_sda"),
+        scl:    validatePinForESP("pin_scl")
+      }
+    };
+
+    try {
+      var a = await fetch("/brd/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "save=" + encodeURIComponent(JSON.stringify(dataObject))
+      });
+      if (!a.ok && 0 !== a.status) throw new Error(`Strežnik je vrnil status: ${a.status}`);
+      setLED("ok", "Shranjeno! Ponovni zagon...");
+      setTimeout(() => { window.location.href = "/" }, 1500);
+    } catch (e) {
+      setLED("error", "Shranjevanje spodletelo: " + e.message);
+    }
+  }
+
+let defaultClickCount = 0;
+let defaultTimeout;
+
+async function default_settings(btn, action) {
+  if (defaultClickCount === 0) {
+    defaultClickCount = 1;
+    
+    setLED("loading", "POZOR: Kliknite še enkrat za potrditev ponastavitve!");
+    btn.style.backgroundColor = "var(--led-err, #ef446e)";
+    btn.style.color = "#fff";
+    btn.style.borderColor = "#ef446e";
+    btn.innerText = "POTRDI PONASTAVITEV?";
+
+    defaultTimeout = setTimeout(() => {
+      defaultClickCount = 0;
+      setLED("ok", "Ponastavitev preklicana.");
+      btn.style.backgroundColor = "";
+      btn.style.color = "";
+      btn.style.borderColor = "";
+      btn.innerText = "Privzete Nastavitve";
+    }, 5000);
+    
+    return; 
+  }
+
+  if (defaultClickCount === 1) {
+    clearTimeout(defaultTimeout);
+    defaultClickCount = 0;
+    
+    setLED("loading", "Ponastavljanje...");
+    btn.innerText = "Ponastavljanje...";
+    
+    try {
+      var a = await fetch("/brd/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "default=yes"
+      });
+      
+      if (!a.ok && 0 !== a.status) throw new Error(`Server response: ${a.status}`);
+      
+      setLED("ok", "default, restart...");
+      /*
+      setTimeout(() => { 
+        window.location.href = "/esp/cp"; 
+      }, 1500);
+      */
+    } catch (e) {
+      setLED("error", "Ponastavitev spodletela: " + e.message);
+      btn.style.backgroundColor = "";
+      btn.style.color = "";
+      btn.style.borderColor = "";
+      btn.innerText = "Privzete Nastavitve";
+    }
+  }
+}
+  function validatePinForESP(id) {
+    let val = parseInt(document.getElementById(id).value);
+    if (isNaN(val) || val < -1 || val > 127) {
+      return -1; 
+    }
+    return val;
+  }
+
+    window.onload = function() {fetchSettings();}
+
+</script>

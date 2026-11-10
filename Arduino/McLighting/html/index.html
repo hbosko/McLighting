@@ -742,7 +742,7 @@ canvas {
 
   <div class="headr" id="headr">
     <div class="head_wrap">
-      <a id="logo_wrap" href="/" class="logo">Mc_Lighting v3</a>
+      <a id="logo_wrap" href="/" class="logo">Mc Lighting v1.5 modern</a>
       <div id="udp">udp</div>
     </div>
   </div>
@@ -755,15 +755,15 @@ canvas {
 
     <div class="slider-section">
       <div class="slider-group">
-        <div class="slider-label-row"><span>Rdeča</span><span id="red_val">128</span></div>
+        <div class="slider-label-row"><span>R</span><span id="red_val">128</span></div>
         <input type="range" id="rng_red" class="slider" min="0" max="255" value="128" oninput="updateSlidersFromUI()">
       </div>
       <div class="slider-group">
-        <div class="slider-label-row"><span>Zelena</span><span id="green_val">128</span></div>
+        <div class="slider-label-row"><span>G</span><span id="green_val">128</span></div>
         <input type="range" id="rng_green" class="slider" min="0" max="255" value="128" oninput="updateSlidersFromUI()">
       </div>
       <div class="slider-group">
-        <div class="slider-label-row"><span>Modra</span><span id="blue_val">128</span></div>
+        <div class="slider-label-row"><span>B</span><span id="blue_val">128</span></div>
         <input type="range" id="rng_blue" class="slider" min="0" max="255" value="128" oninput="updateSlidersFromUI()">
       </div>
     </div>
@@ -785,7 +785,7 @@ canvas {
           <span class="sl_val" id="speed_val">R</span>
         </div>
         <div class="sl_range">
-          <input type="range" oninput="speed()" class="sl_range update_delay" value="1" id="rng_delay" name="1" min="0" max="255">
+          <input type="range" oninput="speed()" class="sl_range update_speed" value="1" id="rng_speed" name="1" min="0" max="255">
         </div>
       </div>
       <div class="slider_div">
@@ -874,7 +874,7 @@ canvas {
     </div>
 
     <div class="sub_mod_box">
-      <button class="orange btn_link mdl" onclick="prikaziHtml('/udp', 'UDP Settings')">UDP sync</button>
+      <button class="orange btn_link mdl" onclick="prikaziHtml('/udp.html', 'UDP Settings')">UDP sync</button>
     </div>
 
     <div class="sub_mod_box">
@@ -897,7 +897,7 @@ canvas {
     </div>-->
 
     <div class="sub_mod_box">
-      <button class="red btn_link" onclick="reboot()">Restart board</button>
+      <button class="red btn_link" onclick="reboot()">Restart module</button>
     </div>
 
   </div>
@@ -972,7 +972,6 @@ canvas {
 
   </div>
 
-
 <!-- Modal -->
 <div id="customModal" class="modal-mask">
   <div class="modal-box">
@@ -1034,9 +1033,9 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   });
 
-    if (typeof GetStripConfig === "function") GetStripConfig();
-    if (typeof GetStripState === "function") GetStripState();
     if (typeof loadCustomPalettes === "function") loadCustomPalettes();
+    if (typeof GetStripConfig === "function") GetStripConfig();
+
   //();
   //GetStripState();
 });
@@ -1079,10 +1078,8 @@ function openTab(click, openTabId) {
     content[i].style.display = "none";
     content[i].classList.remove("hide");
   }
-  var targetTab = document.getElementById(openTabId);
-  if (targetTab) {
-    targetTab.style.display = "block";
-  }
+  document.getElementById(openTabId).style.display = "block";
+
 }
 
 class ColorWheel {
@@ -1246,12 +1243,12 @@ class ColorWheel {
 }
 
 function updateSliderValuesUI(r, g, b) {
-  if(document.getElementById("rng_red")) document.getElementById("rng_red").value = r;
-  if(document.getElementById("rng_green")) document.getElementById("rng_green").value = g;
-  if(document.getElementById("rng_blue")) document.getElementById("rng_blue").value = b;
-  if(document.getElementById("red_val")) document.getElementById("red_val").innerText = r;
-  if(document.getElementById("green_val")) document.getElementById("green_val").innerText = g;
-  if(document.getElementById("blue_val")) document.getElementById("blue_val").innerText = b;
+  document.getElementById("rng_red").value = r;
+  document.getElementById("rng_green").value = g;
+  document.getElementById("rng_blue").value = b;
+  document.getElementById("red_val").innerText = r;
+  document.getElementById("green_val").innerText = g;
+  document.getElementById("blue_val").innerText = b;
 }
 
 function updateSlidersFromUI() {
@@ -1283,29 +1280,20 @@ function GetStripState() {
       updateSliderValuesUI(r, g, b);
 
       var hexColor = componentToHex(r) + componentToHex(g) + componentToHex(b);
-      var status_color_svg = document.getElementById('svg_status_color');
-      if (status_color_svg) status_color_svg.style.fill = "#" + hexColor;
+      document.getElementById('svg_status_color').style.fill = "#" + hexColor;
 
       if (wheelMain) wheelMain.setMarkerFromRGB(r, g, b);
       if (wheelEff) wheelEff.setMarkerFromRGB(r, g, b);
 
-      if (myObj && myObj.hasOwnProperty('brightness')) {
-          let rngBright = document.getElementById("rng_brightness");
-          let brightVal = document.getElementById("bright_val");
-        if (rngBright) rngBright.value = myObj.brightness;
-        if (brightVal) brightVal.innerText = myObj.brightness;
-      }
+        document.getElementById("rng_brightness").value = myObj.brt;
+        document.getElementById("bright_val").innerText = myObj.brt;
 
-      if (myObj && myObj.hasOwnProperty('speed')) {
-          let rngDelay = document.getElementById("rng_delay");
-          let speedVal = document.getElementById("speed_val");
-        if (rngDelay) rngDelay.value = myObj.speed;
-        if (speedVal) speedVal.innerText = myObj.speed;
-      }
+        document.getElementById("rng_speed").value = myObj.spd;
+        document.getElementById("speed_val").innerText = myObj.spd;
 
       const activeMode = myObj.mode;
-      const pal_idx = myObj.pal_idx;
-      const pal_name = myObj.pal_name;
+      const pal_idx = myObj.p_idx;
+      const pal_name = myObj.p_nm;
 
       const allButtonsMode = document.querySelectorAll(".btn_mode, .btn_mode_static");
       const allButtonsPalette = document.querySelectorAll(".btn_palette");
@@ -1329,11 +1317,10 @@ function GetStripState() {
         Mvalues[i] + "</div></div>";
       }
       
-      var stripsContainer = document.getElementById("strips");
-      if (stripsContainer) stripsContainer.innerHTML = OuTxt;
+      document.getElementById("strips").innerHTML = OuTxt;
       
     })
-      .catch(err => console.error("Napaka pri pridobivanju stanja s strežnika:", err));
+      .catch(err => console.error("err receive from server:", err));
 }
 
 
@@ -1345,31 +1332,21 @@ function componentToHex(c) {return ("0" + (Number(c).toString(16))).slice(-2).to
 function rgbToHex(rgb) {return componentToHex(rgb[0]) + componentToHex(rgb[1]) + componentToHex(rgb[2]);}
 
 function brightness() {
-  var brightnessInput = document.getElementById("rng_brightness");
-  if (brightnessInput) {
-    var brightnessValue = brightnessInput.value;
-    var brightTxT = document.getElementById("bright_val");
-    if (brightTxT) brightTxT.innerText = brightnessValue;
-    wsSendCommand("%" + brightnessValue);
-  }
+  var brightnessInput = document.getElementById("rng_brightness").value;;
+    document.getElementById("bright_val").innerText = brightnessInput;
+    wsSendCommand("%" + brightnessInput);
 }
 
 function speed() {
-  var speedInput = document.getElementById("rng_delay");
-  if (speedInput) {
-    var speedValue = speedInput.value;
-    var speedTxT = document.getElementById("speed_val");
-    if (speedTxT) speedTxT.innerText = speedValue;
-    wsSendCommand("?" + speedValue);
-  }
+  var speedInput = document.getElementById("rng_speed").value;
+    document.getElementById("speed_val").innerText = speedInput;
+    wsSendCommand("?" + speedInput);
 }
 
 function initWebSocket() {
   let nav_id = document.getElementById("headr");
-  if (nav_id) {
     nav_id.classList.remove('yellow');
     nav_id.classList.add('red');
-  }
 
   if (typeof websock !== 'undefined' && websock) {
     websock.onclose = null; 
@@ -1381,28 +1358,22 @@ function initWebSocket() {
   websock.onopen = function() { 
     console.log("WS povezan"); 
     placeToast("WS Connected"); 
-    if (nav_id) {
       nav_id.classList.remove('red', 'yellow');
-    }
   };
   
   websock.onerror = function(error) {
     console.error("WebSocket napaka:", error); 
     placeToast("WS err..."); 
-    if (nav_id) {
       nav_id.classList.remove('red');
       nav_id.classList.add('yellow'); 
-    }
   };
   
   websock.onclose = function() {
     console.log("WS prekinjena, retry 2 sec..."); 
     placeToast("WS OffLinE...");
     
-    if (nav_id) {
       nav_id.classList.remove('yellow');
       nav_id.classList.add('red');
-    }
     
     setTimeout(initWebSocket, 2000);
   };
@@ -1440,7 +1411,6 @@ function initWebSocket() {
   };
 }
 
-
 function btn() {
   const dynamicButtons = document.querySelectorAll(".btn_mode");
   dynamicButtons.forEach(button => {
@@ -1466,13 +1436,12 @@ function GetModes() {
   .then(myObj => {
     const modes_html = myObj
       .filter(current_mode => current_mode.id !== undefined)
-      .map(current_mode => `<button class="btn_mode " data-mode="${current_mode.id}">${current_mode.nm}</button>`)
+      .map(current_mode => `<button class="btn_mode" data-mode="${current_mode.id}">${current_mode.nm}</button>`)
       .join('');
 
-    const modesContainer = document.getElementById('btn_modes');
-    if (modesContainer) modesContainer.innerHTML = modes_html;
-    
-    if (typeof btn === "function") btn();
+    document.getElementById('btn_modes').innerHTML = modes_html;
+    btn();
+    GetStripState();
 
   })
   .catch(error => {
@@ -1480,7 +1449,6 @@ function GetModes() {
     
   });
 }
-
 
 function fetchAndRenderPalettes() {
   fetch('/pal/b')
@@ -1510,21 +1478,13 @@ function loadCustomPalettes() {
       renderDynamicPaletteButtons(data.list, "c");
     }
     
-    triggerFinalStateLoad();
+    GetModes();
   })
   .catch(error => {
     console.error("Custom palete Fetch err:", error);
-    triggerFinalStateLoad();
+    GetModes();
   });
 }
-
-function triggerFinalStateLoad() {
-  if (typeof GetModes === "function") {
-    console.log("Vse naloženo. Končni korak: GetModes()");
-    GetModes();
-  }
-}
-
 
 function renderDynamicPaletteButtons(paletteList, type) {
   const container = document.getElementById(`palettes_${type}`);
@@ -1572,12 +1532,8 @@ function reboot() {
 
 function notify_Clients(WHO, aboutWHAT) {
   var command = WHO + "-" + aboutWHAT;
-  if (typeof wsSendCommand === "function") {
     wsSendCommand(command);
-  }
-  if (typeof placeToast === "function") {
     placeToast("WS: " + command, "info");
-  }
 }
 
 function GetStripConfig() {
@@ -1633,15 +1589,9 @@ function GetStripConfig() {
       OuTxt += "<div class='mod_box'><div class='modName'>" + Mkeys[i] + "</div> <div class='modVal'>" + Mvalues[i] + "</div> </div>";
     }
     
-    var stripconfig = document.getElementById("stripconfig");
-    if (stripconfig) {
-        stripconfig.innerHTML = OuTxt;
-    }
+    document.getElementById("stripconfig").innerHTML = OuTxt;
 
-    if (typeof fetchAndRenderPalettes === "function") {
-      console.log("Config naložen. Naslednji korak: fetchAndRenderPalettes()");
       fetchAndRenderPalettes();
-    }
 
   })
   .catch(error => {
@@ -1686,7 +1636,7 @@ function postPixelConfig(bodyData) {
     body: bodyData
   }).then(response => {
     if (!response.ok) {
-      throw new Error("Napaka pri komunikaciji z mikrokrmilnikom.");
+      throw new Error("connection err.");
     }
     console.log("config sent:", bodyData);
   }).catch(error => {
@@ -1701,7 +1651,7 @@ function GetEspStatus(data) {
   if (!data || !data.info) return;
 
   if (data.info.st === "Finish") {
-    console.log("Firmware uspešno naložen! Ponovni zagon naprave... Osveževanje čez 15 sekund.");
+    console.log("FW success! Rebooting... Osveževanje čez 15 sekund.");
     setTimeout(function() {
       window.location.reload();
     }, 10000);
@@ -1739,14 +1689,8 @@ function GetEspStatus(data) {
       </div>
     `).join('');
 
-  var statusContainer = document.querySelector("#espstatus");
-  if (statusContainer) {
-    statusContainer.innerHTML = htmlContent;
-  }
-
-  if (espUdp && document.getElementById("udp")) {
-    document.getElementById("udp").innerHTML = espUdp.mode;
-  }
+  document.querySelector("#espstatus").innerHTML = htmlContent;
+  document.getElementById("udp").innerHTML = espUdp.mode;
 
 }
 
@@ -1815,14 +1759,8 @@ function kopirajTekst() {
 }
 
 modalClose.addEventListener('click', closeModal);
-window.addEventListener('click', function(e) {
-  if (e.target === modal) {closeModal();}
-});
-
-window.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {closeModal();}
-});
-
+window.addEventListener('click', function(e) {if (e.target === modal) {closeModal();}});
+window.addEventListener('keydown', function(e) { if (e.key === 'Escape') {closeModal();}});
 
 </script>
 </body>

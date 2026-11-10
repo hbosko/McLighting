@@ -1,3 +1,4 @@
+
 #define palette_custom_path "/palette.json"
 
 void save_palette_custom_json() {

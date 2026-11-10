@@ -1,3 +1,4 @@
+
 void server_builtin_palettes(){
   server.on(serverURL_get_builtin_palettes, HTTP_GET, [](AsyncWebServerRequest *request) {
     AsyncResponseStream *response = request->beginResponseStream("application/json");

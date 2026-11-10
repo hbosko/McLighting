@@ -30,6 +30,7 @@ void startSoftAccessPoint(const char *ssid, const char *password, const IPAddres
 }
 
 
+
 void initAP_path(){
 
   server.on("/connecttest.txt", HTTP_ANY, [](AsyncWebServerRequest *request) { request->redirect("http://logout.net");});
@@ -98,6 +99,8 @@ void initAP_path(){
     }
   });
 }
+
+
 
 
 void connectToWifi() {
@@ -604,6 +607,7 @@ String parseWifi() {
   serializeJson(jsonBuffer, output);
   
   DEBUG_PRINTLN(output);
+  
   return output;
 }
 
@@ -655,6 +659,7 @@ bool read_Wifi_from_FS() {
   }
   return false;
 }
+
 
 
 const char HTTP_ITEM[] PROGMEM = "<div><a href='#p' class='link' onclick='c(this)'><span>{n}</span><span style='float:right; color:#3cb371;'>{s}</span><div style='clear:both;'></div></a></div>";
@@ -716,3 +721,4 @@ String scanWifi_SSID() {
   
   return output;
 }
+

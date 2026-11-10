@@ -1,3 +1,4 @@
+
 const char* custom_types[] = {
   "PWM", 
   "DUMB",
@@ -84,6 +85,7 @@ const char* MODULE_sub_TYPE(uint8_t id) {
   
   return "Unknown";
 }
+
 
 
 void brd_json(Print& output) {
