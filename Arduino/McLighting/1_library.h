@@ -90,6 +90,7 @@ AsyncMqttClient mqttClient;
 String MQTT_client;
 String MQTT_client_last;
 
+/*
 #if defined(ESP8266)
   #include <ESP8266WiFi.h>
   #include <WiFiUdp.h>
@@ -97,6 +98,10 @@ String MQTT_client_last;
 #elif defined(ESP32)
   #include <WiFi.h>
   #include <WiFiUDP.h>
+  WiFiUDP udp;
+#endif
+*/
+#ifdef ENABLE_UDP
   WiFiUDP udp;
 #endif
 

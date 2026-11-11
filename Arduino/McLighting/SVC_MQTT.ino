@@ -13,13 +13,14 @@ void MQTT_LOOP(){
 }
 */
 
-void publishMqtt(const char *topic, const char* msg) {
+void publishMqtt(const char *topic, const char* msg, size_t len = 0) {
   const char* mtype = MODULE_TYPE(conf_type);
 
-  if (MQTT_connected == 1){
+  if (MQTT_connected == 1) {
     char pubuf[128];
     snprintf_P(pubuf, sizeof(pubuf), sTopicFormat, mtype, device_name, topic);
-    mqttClient.publish(pubuf, 0, false, msg);
+    size_t payloadLen = (len > 0) ? len : strlen(msg);
+    mqttClient.publish(pubuf, 0, false, msg, payloadLen);
     DEBUG_PRINTF("Publish topic: %s | PAYLOAD: %s\r\n", pubuf, msg);
   }
 }

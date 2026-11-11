@@ -27,6 +27,7 @@
 #include "1_library.h"
 #include "prototype.h"
 #ifdef ENABLE_UDP
+  #include "UDP_indexHTML.h"
   #include "UDP_cs.h"
 #endif
 #include "enum_stuff.h"

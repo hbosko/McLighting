@@ -1,12 +1,14 @@
-void notifyClients(const String& topic, const String& msg) {
+void notifyClients(const char* topic, const char* msg) {
   #ifdef ENABLE_webSockets
-    ws.textAll(msg); 
+    if (ws.count() > 0) {
+      ws.textAll(msg);
+    }
   #endif
 
   #ifdef ENABLE_MQTT
     if (MQTT_connected == 1) {
-      if (topic != notify_none) {
-        publishMqtt(topic.c_str(), msg.c_str());
+      if (topic != nullptr && strcmp(topic, notify_none) != 0) {
+        publishMqtt(topic, msg);
       }
     }
   #endif
@@ -14,4 +16,8 @@ void notifyClients(const String& topic, const String& msg) {
   #ifdef ENABLE_BLINK
     esp_blink_mode(ESP_led, blink_MSG);
   #endif
+}
+
+void notifyClients(const char* topic, const String& msg) {
+  notifyClients(topic, msg.c_str());
 }
