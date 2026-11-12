@@ -58,7 +58,7 @@ void custom_webserver_path(){
     //save strip settings
   server.on(serverURL_strip_state, HTTP_POST, handle_strip_state);
 
-  server.on(serverURL_edit_palettes, HTTP_GET, [&](AsyncWebServerRequest * request) {
+  server.on(serverURL_edit_palettes, HTTP_GET, [](AsyncWebServerRequest * request) {
     if (request->client() != nullptr) {
       AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", palette_editor_html_gz, palette_editor_html_gz_len);
       response->addHeader("Content-Encoding", "gzip");
@@ -170,7 +170,7 @@ void init_WEB_server(){
 
   #if include_indexHTML == 1
 
-    server.on("/", HTTP_GET, [&](AsyncWebServerRequest * request) {
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {
       if (request->client() != nullptr) {
         HTTP_client = request->client()->remoteIP().toString();
         //  uint16_t remotePort = request->client()->remotePort();
@@ -183,7 +183,7 @@ void init_WEB_server(){
     });
 
   #else
-    server.on("/", HTTP_GET, [&](AsyncWebServerRequest *request) {
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
       if (request->client() != nullptr) {
         HTTP_client = request->client()->remoteIP().toString();
       }
@@ -203,7 +203,7 @@ void init_WEB_server(){
 
   #endif
 
-  server.on(serverURL_ESP_info, HTTP_GET, [&](AsyncWebServerRequest * request) {
+  server.on(serverURL_ESP_info, HTTP_GET, [](AsyncWebServerRequest * request) {
     AsyncResponseStream *response = request->beginResponseStream("application/json");
     if (response) {
       String jsonBuffer;
@@ -217,11 +217,11 @@ void init_WEB_server(){
   });
 
   /*
-    server.on(serverURL_ESP_info, HTTP_GET, [&](AsyncWebServerRequest * request) {
+    server.on(serverURL_ESP_info, HTTP_GET, [](AsyncWebServerRequest * request) {
       request->send(200, "application/json", ESPinfo());
     });
   */
-  server.on(serverURL_ESP_CP, HTTP_ANY, [&](AsyncWebServerRequest * request) {
+  server.on(serverURL_ESP_CP, HTTP_ANY, [](AsyncWebServerRequest * request) {
     /*
     if (!request->authenticate(login_username, login_password)) {
       return request->requestAuthentication();
@@ -239,7 +239,7 @@ void init_WEB_server(){
   });
   server.on(serverURL_BRD_sett_save, HTTP_ANY, handle_esp_settings_save);
 
-  server.on(serverURL_BRD_sett_html, HTTP_GET, [&](AsyncWebServerRequest * request) {
+  server.on(serverURL_BRD_sett_html, HTTP_GET, [](AsyncWebServerRequest * request) {
       Settings_client = request->client()->remoteIP().toString();
     AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", brd_settings_html_gz, brd_settings_html_gz_len);
     response->addHeader("Content-Encoding", "gzip");
@@ -256,7 +256,7 @@ void init_WEB_server(){
     request->send(response);
   });
 
-  server.on(serverURL_scan_i2c, HTTP_GET, [&](AsyncWebServerRequest *request) {
+  server.on(serverURL_scan_i2c, HTTP_GET, [](AsyncWebServerRequest *request) {
     AsyncResponseStream *response = request->beginResponseStream("application/json");
     scan_i2c(*response); 
     request->send(response);
@@ -275,7 +275,7 @@ void init_WEB_server(){
     //LEAVE this here!!
     server.serveStatic("/", LittleFS, "/");
 
-  server.onNotFound([&](AsyncWebServerRequest *request){
+  server.onNotFound([](AsyncWebServerRequest *request){
     if (request->client() != nullptr) {
       NotFound_client = request->client()->remoteIP().toString();
     }
