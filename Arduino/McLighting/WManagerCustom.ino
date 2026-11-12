@@ -76,7 +76,7 @@ void initAP_path(){
   server.on("/success.txt", HTTP_ANY, [](AsyncWebServerRequest *request) { request->send(200, "text/plain", "success"); });
   server.on("/favicon.ico", HTTP_ANY, [](AsyncWebServerRequest *request) { request->send(404); });
 
-  server.on("/", HTTP_ANY, [&](AsyncWebServerRequest *request) {
+  server.on("/", HTTP_ANY, [](AsyncWebServerRequest *request) {
     /*
     if (firstBoot == false) {
       if(!request->authenticate(edit_AP_username, edit_AP_password))
@@ -90,7 +90,7 @@ void initAP_path(){
     request->send(response);
   });
 
-  server.onNotFound([&](AsyncWebServerRequest *request) {
+  server.onNotFound([](AsyncWebServerRequest *request) {
     String host = request->host();
     if (host.indexOf("4.4.4.1") == -1 && (request->url().indexOf(".html") != -1 || request->url() == "/")) {
       request->redirect(localIPURL);
