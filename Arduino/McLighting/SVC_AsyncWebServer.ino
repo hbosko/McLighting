@@ -1,3 +1,5 @@
+//TODO: choose default if not wifi connect--- webpage or AP_mode?
+
 #include "notFound_HTML.h"
 #include "brd_settings_HTML.h"
 #include "esp_Control_panel_HTML.h"
@@ -160,46 +162,79 @@ void custom_webserver_path(){
 void init_WEB_server(){
   HTTP_enabled = 1;
 
-    //init_global_login();
+  //init_global_login();
 
-    server.on(wifiPath, HTTP_ANY, [](AsyncWebServerRequest *request){
-      //request->send(403, "text/plain", "Downloading Virus...");
-      request->redirect("/login");
-
-    });
+  server.on(wifiPath, HTTP_ANY, [](AsyncWebServerRequest *request){
+    request->redirect("/login");
+  });
 
   #if include_indexHTML == 1
 
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {
+    server.on("/", HTTP_ANY, [](AsyncWebServerRequest * request) {
       if (request->client() != nullptr) {
         HTTP_client = request->client()->remoteIP().toString();
-        //  uint16_t remotePort = request->client()->remotePort();
-        //  String localIP = request->client()->localIP().toString();
       }
 
+      AsyncWebServerResponse *response;
+      if (apActive) {
+        response = request->beginResponse(200, "text/html", SendHTML());
+      } else {
+        response = request->beginResponse_P(200, "text/html", index_html_gz, index_html_gz_len);
+        response->addHeader("Content-Encoding", "gzip");
+      }
+      response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      response->addHeader("Pragma", "no-cache");
+      response->addHeader("Expires", "-1");
+      request->send(response);
+    });
+
+    server.on("/home", HTTP_GET, [](AsyncWebServerRequest * request) {
       AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", index_html_gz, index_html_gz_len);
       response->addHeader("Content-Encoding", "gzip");
       request->send(response);
     });
 
   #else
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+
+    server.on("/", HTTP_ANY, [](AsyncWebServerRequest *request) {
       if (request->client() != nullptr) {
         HTTP_client = request->client()->remoteIP().toString();
       }
 
-    if (LittleFS.exists("/index.html")) {
-      request->send(LittleFS, "/index.html", "text/html");
-    }
-    else if (LittleFS.exists("/index.html.gz")) {
-      AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/index.html.gz", "text/html");
-      response->addHeader("Content-Encoding", "gzip");
+      AsyncWebServerResponse *response;
+      if (apActive) {
+        response = request->beginResponse(200, "text/html", SendHTML());
+      } else {
+        if (LittleFS.exists("/index.html")) {
+          response = request->beginResponse(LittleFS, "/index.html", "text/html");
+        }
+        else if (LittleFS.exists("/index.html.gz")) {
+          response = request->beginResponse(LittleFS, "/index.html.gz", "text/html");
+          response->addHeader("Content-Encoding", "gzip");
+        } else {
+          request->redirect("/login");
+          DEBUG_PRINTLN("NO index.html redirecting...");
+          return;
+        }
+      }
+      response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      response->addHeader("Pragma", "no-cache");
+      response->addHeader("Expires", "-1");
       request->send(response);
-    } else {
-      request->redirect("/login");
-      DEBUG_PRINTLN("NO index.html redirecting...");
-    }
-  });
+    });
+
+    server.on("/home", HTTP_GET, [](AsyncWebServerRequest *request) {
+      if (LittleFS.exists("/index.html")) {
+        request->send(LittleFS, "/index.html", "text/html");
+      }
+      else if (LittleFS.exists("/index.html.gz")) {
+        AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/index.html.gz", "text/html");
+        response->addHeader("Content-Encoding", "gzip");
+        request->send(response);
+      } else {
+        request->redirect("/login");
+      }
+    });
 
   #endif
 

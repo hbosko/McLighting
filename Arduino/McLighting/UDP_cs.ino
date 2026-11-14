@@ -172,6 +172,13 @@
 
 
   void serverOn_UDP() {
+    server.on(serverURL_get_HTML, HTTP_GET, [](AsyncWebServerRequest * request) {
+      if (request->client() != nullptr) {
+        AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", udp_html_gz, udp_html_gz_len);
+        response->addHeader("Content-Encoding", "gzip");
+        request->send(response);
+      }
+    });
 
     //  server.on(serverURL_get_UDP, HTTP_GET, [](AsyncWebServerRequest * request) {
     server.on("/udp/get", HTTP_GET, [](AsyncWebServerRequest* request) {
@@ -253,14 +260,6 @@
     });
 
 
-    server.on(serverURL_get_HTML, HTTP_GET, [](AsyncWebServerRequest * request) {
-      if (request->client() != nullptr) {
-        AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", udp_html_gz, udp_html_gz_len);
-        response->addHeader("Content-Encoding", "gzip");
-        request->send(response);
-      }
-    });
-    
   }
 
 #endif

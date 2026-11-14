@@ -32,6 +32,14 @@ const char* mqqtUserParam = "mquser";
 const char* mqqtServerParam = "mqsrv";
 const char* mqqtPortParam = "mqport";
 
+unsigned long wifiMillis = 0;
+const unsigned long WIFI_TIMEOUT = 10000; // 10 sekund 
+bool wifi_connecting = false;
+
+//AP try to reconnect
+unsigned long lastTryInAp = 0;
+const unsigned long RECONNECT_INTERVAL = interval_1m; // 5 minut
+
   // const char* give me sometimes weird characters & failing to (re)connect, going back to String (works fine)
 String hostNameParam = "hostname";
 String ssidParam = "ssid";
