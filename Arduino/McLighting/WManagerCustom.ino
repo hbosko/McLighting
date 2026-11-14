@@ -2,21 +2,20 @@
 void startSoftAccessPoint(const char *ssid, const char *password, const IPAddress &localIP, const IPAddress &gatewayIP) {
   initAP_path();
 
-#if defined(ESP8266)
-  WiFi.persistent(false);
-  WiFi.setSleepMode(WIFI_NONE_SLEEP);
-  wifi_station_disconnect();
-  wifi_station_set_reconnect_policy(false);
-  WiFi.disconnect(true);
-  delay(50);
-  WiFi.mode(WIFI_AP_STA);
-  WiFi.setOutputPower(12.0);
-#elif defined(ESP32)
-  WiFi.setSleep(false);
-  WiFi.disconnect();
-
-  WiFi.mode(WIFI_AP_STA);
-#endif
+  #if defined(ESP8266)
+    WiFi.persistent(false);
+    WiFi.setSleepMode(WIFI_NONE_SLEEP);
+    wifi_station_disconnect();
+    wifi_station_set_reconnect_policy(false);
+    WiFi.disconnect(true);
+    delay(50);
+    WiFi.mode(WIFI_AP_STA);
+    WiFi.setOutputPower(12.0);
+  #elif defined(ESP32)
+    WiFi.setSleep(false);
+    WiFi.disconnect();
+    WiFi.mode(WIFI_AP_STA);
+  #endif
 
   apActive = true;
   AP_count = 0;
@@ -32,27 +31,21 @@ void startSoftAccessPoint(const char *ssid, const char *password, const IPAddres
 
 void initAP_path() {
 
-  server.on("/connecttest.txt", HTTP_ANY, [](AsyncWebServerRequest *request) {
-    request->redirect("http://logout.net");
-  });
-  server.on("/wpad.dat", HTTP_ANY, [](AsyncWebServerRequest *request) {
-    request->send(404);
-  });
-  server.on("/ncsi.txt", HTTP_ANY, [](AsyncWebServerRequest *request) {
-    request->send(200, "text/plain", "Microsoft NCSI");
-  });
+  server.on("/connecttest.txt", HTTP_ANY, [](AsyncWebServerRequest *request) {request->redirect("http://logout.net");});
+  server.on("/wpad.dat", HTTP_ANY, [](AsyncWebServerRequest *request) {request->send(404);});
+  server.on("/ncsi.txt", HTTP_ANY, [](AsyncWebServerRequest *request) {request->send(200, "text/plain", "Microsoft NCSI");});
 
   server.on("/scan-async", HTTP_GET, [](AsyncWebServerRequest *request) {
-#if defined(ESP8266)
-    WiFi.mode(WIFI_AP_STA);
-    delay(10);
-    WiFi.scanDelete();
-    WiFi.scanNetworks(true);
-#elif defined(ESP32)
+    #if defined(ESP8266)
+      WiFi.mode(WIFI_AP_STA);
+      delay(10);
+      WiFi.scanDelete();
+      WiFi.scanNetworks(true);
+    #elif defined(ESP32)
       WiFi.mode(WIFI_AP_STA);
       WiFi.scanDelete();
       WiFi.scanNetworks(true, true);
-#endif
+    #endif
     request->send(200, "text/plain", "OK");
   });
 
@@ -65,10 +58,10 @@ void initAP_path() {
       request->send(200, "text/html", "<div>❌ Nobenega omrežja ni v dosegu. <br><br><a href='#' class='scan-btn' onclick='sproziInOsvezi(); return false;'>POSKUSI PONOVNO</a></div>");
     } else {
       request->send(200, "text/html", scanWifi_SSID());
-#if defined(ESP8266)
+    #if defined(ESP8266)
       WiFi.mode(WIFI_AP);
       wifi_station_disconnect();
-#endif
+    #endif
     }
   });
 
@@ -103,9 +96,9 @@ void initAP_path() {
 void connectToWifi() {
   WiFi.mode(WIFI_STA);
 
-#if defined(ESP32)
-  // WiFi.setTxPower(WIFI_POWER_8_5dBm);
-#endif
+  #if defined(ESP32)
+    // WiFi.setTxPower(WIFI_POWER_8_5dBm);
+  #endif
 
   WiFi.setAutoReconnect(false);
   WiFi.disconnect();
@@ -120,45 +113,46 @@ void connectToWifi() {
 }
 
 #if defined(ESP8266)
-void onWifiConnect(const WiFiEventStationModeGotIP &event) {
-  (void)event;
-  AP_count = 0;
-  apActive = false;
-  WIFI_connected = 1;
-  DEBUG_PRINTLN("Connected to Wi-Fi (ESP8266 Got IP).");
-}
+  void onWifiConnect(const WiFiEventStationModeGotIP &event) {
+    (void)event;
+    AP_count = 0;
+    apActive = false;
+    WIFI_connected = 1;
+    DEBUG_PRINTLN("Connected to Wi-Fi (ESP8266 Got IP).");
+  }
 
-void onWifiDisconnect(const WiFiEventStationModeDisconnected &event) {
-  (void)event;
-  WIFI_connected = 0;
-  DEBUG_PRINTLN("Disconnected from Wi-Fi (ESP8266).");
-}
+  void onWifiDisconnect(const WiFiEventStationModeDisconnected &event) {
+    (void)event;
+    WIFI_connected = 0;
+    DEBUG_PRINTLN("Disconnected from Wi-Fi (ESP8266).");
+  }
+
 #elif defined(ESP32)
-void WiFiGotIP(WiFiEvent_t event, WiFiEventInfo_t info) {
-  WIFI_connected = 1;
-  AP_count = 0;
-  apActive = false;
-  DEBUG_PRINTLN("WiFi connected (ESP32 Got IP)!");
-  DEBUG_PRINT("IP address: ");
-  DEBUG_PRINTLN(WiFi.localIP());
-}
+  void WiFiGotIP(WiFiEvent_t event, WiFiEventInfo_t info) {
+    WIFI_connected = 1;
+    AP_count = 0;
+    apActive = false;
+    DEBUG_PRINTLN("WiFi connected (ESP32 Got IP)!");
+    DEBUG_PRINT("IP address: ");
+    DEBUG_PRINTLN(WiFi.localIP());
+  }
 
-void WiFiStationDisconnected(WiFiEvent_t event, WiFiEventInfo_t info) {
-  WIFI_connected = 0;
-  DEBUG_PRINT("Disconnected from WiFi. Reason: ");
-  DEBUG_PRINTLN(info.wifi_sta_disconnected.reason);
-}
+  void WiFiStationDisconnected(WiFiEvent_t event, WiFiEventInfo_t info) {
+    WIFI_connected = 0;
+    DEBUG_PRINT("Disconnected from WiFi. Reason: ");
+    DEBUG_PRINTLN(info.wifi_sta_disconnected.reason);
+  }
 #endif
 
 
 // SETUP
 void init_CUSTOM_WIFI() {
 
-#if defined(ESP8266)
-  WiFi.setSleepMode(WIFI_NONE_SLEEP);
-#elif defined(ESP32)
-  WiFi.setSleep(false);
-#endif
+  #if defined(ESP8266)
+    WiFi.setSleepMode(WIFI_NONE_SLEEP);
+  #elif defined(ESP32)
+    WiFi.setSleep(false);
+  #endif
 
   DEBUG_PRINTLN(ARDUINO_BOARD);
 
@@ -184,27 +178,27 @@ void init_CUSTOM_WIFI() {
 
     read_Wifi_from_FS();
 
-#if defined(ESP8266)
-    WiFi.setAutoConnect(false);
-    WiFi.setAutoReconnect(true);
-    wifiConnectHandler = WiFi.onStationModeGotIP(onWifiConnect);
-    wifiDisconnectHandler = WiFi.onStationModeDisconnected(onWifiDisconnect);
-    WiFi.hostname(device_name);
+    #if defined(ESP8266)
+      WiFi.setAutoConnect(false);
+      WiFi.setAutoReconnect(true);
+      wifiConnectHandler = WiFi.onStationModeGotIP(onWifiConnect);
+      wifiDisconnectHandler = WiFi.onStationModeDisconnected(onWifiDisconnect);
+      WiFi.hostname(device_name);
 
-#elif defined(ESP32)  // mqtt not connecting...
-    //  WiFi.onEvent(WiFiStationConnected, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_CONNECTED);
-    WiFi.onEvent(WiFiGotIP, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
-    //  WiFi.onEvent(WiFiStationDisconnected, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
-    WiFi.setHostname(device_name);
-#endif
+    #elif defined(ESP32)
+      //  WiFi.onEvent(WiFiStationConnected, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_CONNECTED);   // LEAVE COMMENTED!
+      WiFi.onEvent(WiFiGotIP, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
+      //  WiFi.onEvent(WiFiStationDisconnected, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);   // LEAVE COMMENTED!
+      WiFi.setHostname(device_name);
+    #endif
 
-#ifdef ENABLE_OTA
-    init_OTA(device_name);
-#endif
+    #ifdef ENABLE_OTA
+      init_OTA(device_name);
+    #endif
 
-#ifdef ENABLE_MDNS
-    init_MDNS(device_name);
-#endif
+    #ifdef ENABLE_MDNS
+      init_MDNS(device_name);
+    #endif
 
     connectToWifi();
   }
@@ -245,7 +239,7 @@ void loop_CUSTOM_WIFI() {
     }
   }
 
-  if (millis() - WM_loop > 5000) {
+  if (millis() - WM_loop > interval_5s) {
     WM_loop = millis();
 
     if (apActive == false && WiFi.status() != WL_CONNECTED && wifi_connecting == false) {
@@ -345,20 +339,20 @@ void handle_wifisave(AsyncWebServerRequest *request) {
         wifiSpremenjen = true;
       }
 
-#ifdef ENABLE_MQTT
-      if (p->name() == mqqtServerParam) {
-        WMconfig.WMmqttServer = p->value();
-      }
-      if (p->name() == mqqtPortParam) {
-        WMconfig.WMmqttPort = p->value().toInt();
-      }
-      if (p->name() == mqqtUserParam) {
-        WMconfig.WMmqttUser = p->value();
-      }
-      if (p->name() == mqqtPasswdParam) {
-        WMconfig.WMmqttPass = p->value();
-      }
-#endif
+      #ifdef ENABLE_MQTT
+        if (p->name() == mqqtServerParam) {
+          WMconfig.WMmqttServer = p->value();
+        }
+        if (p->name() == mqqtPortParam) {
+          WMconfig.WMmqttPort = p->value().toInt();
+        }
+        if (p->name() == mqqtUserParam) {
+          WMconfig.WMmqttUser = p->value();
+        }
+        if (p->name() == mqqtPasswdParam) {
+          WMconfig.WMmqttPass = p->value();
+        }
+      #endif
     }
   }
 
@@ -402,28 +396,29 @@ const char HTTP_SCRIPT[] PROGMEM =
   "</script>";
 
 
-const char HTTP_STYLE[] PROGMEM = "<style>"
-                                  "*{box-sizing:border-box;margin:0;padding:0;font-family:sans-serif;}"
-                                  "body{background:#1e222b;color:#fff;padding:15px;display:flex;justify-content:center;align-items:center;min-height:100vh;}"
-                                  ".container{width:100%;max-width:480px;}"
-                                  ".info-card,form{background:#2d323f;box-shadow:0 10px 25px rgba(0,0,0,0.3);margin-bottom:10px;padding:10px;border-radius:12px;}"
-                                  "h2,h3{font-size:1.2rem;}"
-                                  "h3{font-size:1rem;text-transform:uppercase;color:#4fd1c5;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:5px;}"
-                                  ".info-card p{font-size:0.9rem;margin-bottom:8px;color:#a0aec0;}"
-                                  ".form-row{display:flex;align-items:center;margin-bottom:12px;}"
-                                  "label{font-size:0.9rem;width:130px;flex-shrink:0;}"
-                                  ".mqform{color:#ed8936;}"
-                                  ".input-container{flex-grow:1;position:relative;display:flex;flex-direction:column;}"
-                                  "input[type='text'],input[type='password'],input[type='number']{background:#3f4453;border:1px solid transparent;border-radius:6px;color:#fff;padding:8px 12px;font-size:0.95rem;width:100%;outline:none;}"
-                                  "input:focus{border-color:#63b3ed;}"
-                                  ".show-pass{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:4px;}"
-                                  ".show-pass label{width:auto;font-size:0.8rem;color:#a0aec0;}"
-                                  "input[type='submit'],.scan-btn{background:#48bb78;color:#fff;border:none;border-radius:6px;padding:10px;font-size:1rem;font-weight:600;cursor:pointer;width:100%;text-transform:uppercase;text-align:center;display:block;text-decoration:none;}"
-                                  "input[type='submit']:hover{background:#38a169;}"
-                                  ".scan-btn{background:#4682b4;margin-top:15px;}"
-                                  ".msg{margin-top:15px;font-size:0.8rem;color:#ed8936;text-align:center;background:rgba(255,255,255,0.05);padding:8px;border-radius:6px;}"
-                                  ".link{background:#3f4453;color:#fff;margin:6px 0;padding:10px;display:block;border-radius:6px;text-decoration:none;font-size:0.9rem;}"
-                                  "</style>";
+const char HTTP_STYLE[] PROGMEM = 
+  "<style>"
+  "*{box-sizing:border-box;margin:0;padding:0;font-family:sans-serif;}"
+  "body{background:#1e222b;color:#fff;padding:15px;display:flex;justify-content:center;align-items:center;min-height:100vh;}"
+  ".container{width:100%;max-width:480px;}"
+  ".info-card,form{background:#2d323f;box-shadow:0 10px 25px rgba(0,0,0,0.3);margin-bottom:10px;padding:10px;border-radius:12px;}"
+  "h2,h3{font-size:1.2rem;}"
+  "h3{font-size:1rem;text-transform:uppercase;color:#4fd1c5;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:5px;}"
+  ".info-card p{font-size:0.9rem;margin-bottom:8px;color:#a0aec0;}"
+  ".form-row{display:flex;align-items:center;margin-bottom:12px;}"
+  "label{font-size:0.9rem;width:130px;flex-shrink:0;}"
+  ".mqform{color:#ed8936;}"
+  ".input-container{flex-grow:1;position:relative;display:flex;flex-direction:column;}"
+  "input[type='text'],input[type='password'],input[type='number']{background:#3f4453;border:1px solid transparent;border-radius:6px;color:#fff;padding:8px 12px;font-size:0.95rem;width:100%;outline:none;}"
+  "input:focus{border-color:#63b3ed;}"
+  ".show-pass{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:4px;}"
+  ".show-pass label{width:auto;font-size:0.8rem;color:#a0aec0;}"
+  "input[type='submit'],.scan-btn{background:#48bb78;color:#fff;border:none;border-radius:6px;padding:10px;font-size:1rem;font-weight:600;cursor:pointer;width:100%;text-transform:uppercase;text-align:center;display:block;text-decoration:none;}"
+  "input[type='submit']:hover{background:#38a169;}"
+  ".scan-btn{background:#4682b4;margin-top:15px;}"
+  ".msg{margin-top:15px;font-size:0.8rem;color:#ed8936;text-align:center;background:rgba(255,255,255,0.05);padding:8px;border-radius:6px;}"
+  ".link{background:#3f4453;color:#fff;margin:6px 0;padding:10px;display:block;border-radius:6px;text-decoration:none;font-size:0.9rem;}"
+  "</style>";
 
 String SendHTML() {
   String html = "<!DOCTYPE html><html>\n";
@@ -565,10 +560,6 @@ String SendHTML() {
 }
 
 
-
-
-
-
 void write_Wifi_to_FS(const char *path) {
 
   File file = LittleFS.open(path, "w");
@@ -602,12 +593,12 @@ String parseWifi() {
   root[ssidParam] = WMconfig.WMssid;
   root[passParam] = WMconfig.WMpass;
 
-#ifdef ENABLE_MQTT
-  root[mqqtServerParam] = WMconfig.WMmqttServer;
-  root[mqqtPortParam] = WMconfig.WMmqttPort;
-  root[mqqtUserParam] = WMconfig.WMmqttUser;
-  root[mqqtPasswdParam] = WMconfig.WMmqttPass;
-#endif
+  #ifdef ENABLE_MQTT
+    root[mqqtServerParam] = WMconfig.WMmqttServer;
+    root[mqqtPortParam] = WMconfig.WMmqttPort;
+    root[mqqtUserParam] = WMconfig.WMmqttUser;
+    root[mqqtPasswdParam] = WMconfig.WMmqttPass;
+  #endif
 
   String output = "";
   serializeJson(jsonBuffer, output);
@@ -616,7 +607,6 @@ String parseWifi() {
 
   return output;
 }
-
 
 
 bool read_Wifi_from_FS() {
@@ -645,12 +635,12 @@ bool read_Wifi_from_FS() {
         WMconfig.WMssid = json[ssidParam].as<String>();
         WMconfig.WMpass = json[passParam].as<String>();
 
-#ifdef ENABLE_MQTT
-        WMconfig.WMmqttServer = json[mqqtServerParam].as<String>();
-        WMconfig.WMmqttPort = json[mqqtPortParam].as<uint16_t>();
-        WMconfig.WMmqttUser = json[mqqtUserParam].as<String>();
-        WMconfig.WMmqttPass = json[mqqtPasswdParam].as<String>();
-#endif
+        #ifdef ENABLE_MQTT
+          WMconfig.WMmqttServer = json[mqqtServerParam].as<String>();
+          WMconfig.WMmqttPort   = json[mqqtPortParam].as<uint16_t>();
+          WMconfig.WMmqttUser   = json[mqqtUserParam].as<String>();
+          WMconfig.WMmqttPass   = json[mqqtPasswdParam].as<String>();
+        #endif
 
         return true;
       } else {
@@ -665,8 +655,6 @@ bool read_Wifi_from_FS() {
   }
   return false;
 }
-
-
 
 const char HTTP_ITEM[] PROGMEM = "<div><a href='#p' class='link' onclick='c(this)'><span>{n}</span><span style='float:right; color:#3cb371;'>{s}</span><div style='clear:both;'></div></a></div>";
 
@@ -710,8 +698,7 @@ String scanWifi_SSID() {
     String ss_id = WiFi.SSID(indices[i]);
     int32_t rssi = WiFi.RSSI(indices[i]);
 
-    int quality = (rssi <= -100) ? 0 : (rssi >= -50) ? 100
-                                                     : 2 * (rssi + 100);
+    int quality = (rssi <= -100) ? 0 : (rssi >= -50) ? 100 : 2 * (rssi + 100);
     String qll = String(quality) + "%";
     /*
       String signalIcon = "";
