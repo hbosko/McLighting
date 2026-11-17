@@ -2,12 +2,13 @@
 
 #include <Arduino.h>
 #include <array>
+#include <StreamString.h>
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
 
 #if defined(ESP8266)
   #include <ESP8266WiFi.h>
-  #include <ESPAsyncTCP.h>
+  //#include <ESPAsyncTCP.h>
   #include <ESP8266HTTPClient.h>
   #include <ESP8266httpUpdate.h>
   
@@ -38,36 +39,36 @@
   // use this https://github.com/Aircoookie/ESPAsyncWebServer
 #include "ESPAsyncWebServer.h"
 AsyncWebServer server(www_port);
-  String HTTP_client;
-    String HTTP_client_last;
-  String LOGIN_client;
-    String LOGIN_client_last;
-  String LOGOUT_client;
-    String LOGOUT_client_last;
-  String NotFound_client;
-    String NotFound_client_last;
-  String wifi_edit_client;
-    String wifi_edit_client_last;
-  String Settings_client;
-    String Settings_client_last;
-      uint8_t client_loged_out = 0;
-      uint8_t client_loged_out_last;
-      const char* client_loged = "Client loged: ";
+  char HTTP_client[16] = "";
+  char HTTP_client_last[16] = "";
+  char LOGIN_client[16] = "";
+  char LOGIN_client_last[16] = "";
+  char LOGOUT_client[16] = "";
+  char LOGOUT_client_last[16] = "";
+  char NotFound_client[16] = "";
+  char NotFound_client_last[16] = "";
+  char wifi_edit_client[16] = "";
+  char wifi_edit_client_last[16] = "";
+  char Settings_client[16] = "";
+  char Settings_client_last[16] = "";
+    uint8_t client_loged_out = 0;
+    uint8_t client_loged_out_last;
+    const char* client_loged = "Client loged: ";
 
     uint8_t conf_type = 0;
     uint8_t conf_sub_type = 0;
     char custom_type[32];
     char custom_sub_type[32];
 
-  String globalSessionToken = "";
+  uint32_t globalSessionToken = 0;
 
 #include <DNSServer.h>
 DNSServer dnsServer;
 
 #ifdef ENABLE_webSockets
   AsyncWebSocket ws(ws_path);
-  String WS_client;
-  String WS_client_last;
+  char WS_client[16] = "";
+  char WS_client_last[16] = "";
 #endif
 
 #include "src/ESPAsyncHTTPUpdateServer/ESPAsyncHTTPUpdateServer.h"
@@ -87,8 +88,8 @@ DNSServer dnsServer;
 
 #include "src/AsyncMqttClient/AsyncMqttClient.h"
 AsyncMqttClient mqttClient;
-String MQTT_client;
-String MQTT_client_last;
+  char MQTT_client[16] = "";
+  char MQTT_client_last[16] = "";
 
 /*
 #if defined(ESP8266)

@@ -96,7 +96,7 @@ void handler_save_palettes(){
     // inject protection
     if (doc["type"].isNull() || doc["type"] != "palettes" || !doc["list"].is<JsonArray>()) {
         DEBUG_PRINTLN("neveljavne JSON strukture zavrnjen!");
-      request->send(422, "application/json", "{\"status\":\"error\",\"message\":\"Denied: Wrong svructure palette!\"}");
+      request->send(422, "application/json", "{\"status\":\"error\",\"message\":\"Denied: Wrong palette structure !\"}");
       return;
     }
 

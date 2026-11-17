@@ -2,19 +2,13 @@ const char login_html[] PROGMEM = "<!DOCTYPE html><html lang=\"sl\"><head><meta 
 
 unsigned long lastActiveSesion = 0;
 
-void tokenTimeOut() {
-  /*
-    if (client_loged_out == 1) {
-    client_loged_out = 0;
-    DEBUG_PRINTLN("server logout.");
-  }
-  */
-  osveziZetonSeje();
-  client_loged_out = 1;
+void osveziZetonSeje() {
+  globalSessionToken = random(100000, 999999);
 }
 
-void osveziZetonSeje() {
-  globalSessionToken = String(random(100000, 999999));
+void tokenTimeOut() {
+  osveziZetonSeje();
+  client_loged_out = 1;
 }
 
 String loginProcessor(const String& var) {
@@ -45,44 +39,32 @@ public:
         url.startsWith(serverURL_edit_ap) || 
         url.startsWith(serverURL_ESP_fw) || 
         url.startsWith("/edit") ||
-      // url.startsWith("/wifi/") ||
-      // url.startsWith("/brd") ||
-      // url.startsWith("/esp/") ||
         url.startsWith(wifiPath)) {
 
       if (request->hasHeader("Cookie")) {
         String cookieHeader = request->header("Cookie");
-        String expectedCookie = "esp_session=" + globalSessionToken;
+        
+        String expectedCookie = "esp_session=" + String(globalSessionToken);
         
         if (cookieHeader.indexOf(expectedCookie) != -1) {
           client_loged_out = 0;
-          /*
-          if (millis() - lastActiveSesion > interval_10m) {
-            client_loged_out = 1;
-            globalSessionToken = "";
-            DEBUG_PRINTLN("Seja je potekla (Timeout).");
-            return true;
-          }
-          
-          lastActiveSesion = millis();
-          */
           return false;
         }
       }
-       //client_loged_out = 1;
       return true;
     }
     return false;
   }
 
   void handleRequest(AsyncWebServerRequest *request) override {
-      String LOGOUT_client = request->client()->remoteIP().toString();
-      DEBUG_PRINT("LOGOUT_client: ");
-      DEBUG_PRINTLN(LOGOUT_client);
-    //client_loged_out = 1;
+    if (request->client() != nullptr) {
+      snprintf(LOGOUT_client, sizeof(LOGOUT_client), "%s", request->client()->remoteIP().toString().c_str());
+    }
+    DEBUG_PRINT("LOGOUT_client: ");
+    DEBUG_PRINTLN(LOGOUT_client);
+
     request->send_P(200, "text/html", login_html, loginProcessor);
   }
-
 };
 
 SecurityFilter globalSecurityHandler;
@@ -97,22 +79,20 @@ void init_global_login() {
     request->send_P(200, "text/html", login_html, loginProcessor);
   });
 
-
   server.on("/login", HTTP_POST, [](AsyncWebServerRequest *request){
-    LOGIN_client = request->client()->remoteIP().toString();
+    if (request->client() != nullptr) {
+      snprintf(LOGIN_client, sizeof(LOGIN_client), "%s", request->client()->remoteIP().toString().c_str());
+    }
 
     if(request->hasArg("usr") && request->hasArg("pswd")) {
-      String u = request->arg("usr");
-      String p = request->arg("pswd");
-      
-      if(u == String(login_username) && p == String(login_password)) {
+      if(request->arg("usr") == login_username && request->arg("pswd") == login_password) {
         osveziZetonSeje();
         client_loged_out = 0;
+        
         AsyncWebServerResponse *response = request->beginResponse(303); 
         
-        String cookieHeader = "esp_session=" + globalSessionToken + "; Path=/; HttpOnly; SameSite=Lax";
+        String cookieHeader = "esp_session=" + String(globalSessionToken) + "; Path=/; HttpOnly; SameSite=Lax";
         response->addHeader("Set-Cookie", cookieHeader);
-        
         response->addHeader("Location", serverURL_ESP_CP);
         
         request->send(response);
@@ -122,7 +102,6 @@ void init_global_login() {
     request->send_P(401, "text/html", login_html, loginErrorProcessor);
   });
 
-
   server.on("/logout", HTTP_GET, [](AsyncWebServerRequest *request){
     client_loged_out = 1;
     AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "GTFO!");
@@ -131,5 +110,3 @@ void init_global_login() {
     request->send(response);
   });
 }
-
-

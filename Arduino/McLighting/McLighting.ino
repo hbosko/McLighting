@@ -1,5 +1,5 @@
 // disable DEGUG on live product!!
-#define ENABLE_DEBUG_service 0
+#define ENABLE_DEBUG_service 1
 
 #define ENABLE_webSockets_service 1
 #define ENABLE_MQTT_service 1
@@ -15,7 +15,7 @@
 
 #define PASSWD_PROTECTED_service 0
 
-//builtInLed // disable (0) if DATA pin = 2
+//builtInLed blink // disable (0) if DATA pin === 2
 #define ENABLE_BLINK_service 0
 
 #if include_indexHTML == 1
@@ -58,6 +58,7 @@ void setup() {
   #endif
 
   init_ChipID();
+  initCleanBoardName();
 
   #if defined(ESP8266)
     if(!LittleFS.begin()){ DEBUG_PRINTLN("=<=< Error LittleFS"); } 
@@ -68,7 +69,7 @@ void setup() {
   #endif
   
   init_esp_settings();
-  Wire.begin(SDA_pin, SCL_pin);
+  //Wire.begin(SDA_pin, SCL_pin);
 
     #ifdef PASSWD_PROTECTED
       init_global_login();
@@ -105,7 +106,6 @@ void setup() {
   init_strip_state_path();
     delay(100);
   init_strip_config_path();
-  //read_strip_config_FS();
     delay(100);
   init_Strip();
     delay(50);
@@ -116,7 +116,7 @@ void loop() {
 
   #ifdef ENABLE_webSockets
     #ifdef ESP8266
-      ws.cleanupClients(4);
+      ws.cleanupClients(3);
     #else
       ws.cleanupClients();
     #endif
@@ -139,7 +139,8 @@ void loop() {
 
   if (currentMillis - loop_time_30 >= interval_30s) {
     loop_time_30 = currentMillis;
-    notifyClients(mqtt_ESPinfo, ESPinfo());
+    notifyClients(mqtt_ESPinfo, ESPinfo().c_str());
+
   }
 
   switch (Mode) {
@@ -152,7 +153,7 @@ void loop() {
       Mode = SETCOLOR;
 
       //ESP.wdtFeed();
-      yield();
+      //yield();
 
       break;
 

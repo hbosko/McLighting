@@ -26,7 +26,7 @@ void init_OTA(const char* ota_name) {
   ArduinoOTA.onError([](ota_error_t error) {
     DEBUG_PRINTF("OTA Error [%u]: ", error);
 
-    if (error == OTA_AUTH_ERROR)         DEBUG_PRINTLN("Auth Failed");
+         if (error == OTA_AUTH_ERROR)    DEBUG_PRINTLN("Auth Failed");
     else if (error == OTA_BEGIN_ERROR)   DEBUG_PRINTLN("Begin Failed");
     else if (error == OTA_CONNECT_ERROR) DEBUG_PRINTLN("Connect Failed");
     else if (error == OTA_RECEIVE_ERROR) DEBUG_PRINTLN("Receive Failed");
@@ -51,17 +51,20 @@ void init_MDNS(const char* md_name) {
       MDNS_connected = 1;
     }
     
-    MDNS.addService(MDNS_SERVICE_NAME, MDNS_PROTOCOL, MDNS_PORT);
-      MDNS.addServiceTxt(MDNS_SERVICE_NAME, MDNS_PROTOCOL, "brd", ARDUINO_BOARD);
-      MDNS.addServiceTxt(MDNS_SERVICE_NAME, MDNS_PROTOCOL, "ver", FIRMWARE_VERSION);
-      MDNS.addServiceTxt(MDNS_SERVICE_NAME, MDNS_PROTOCOL, "mac", String(WiFi.macAddress()));
-      MDNS.addServiceTxt(MDNS_SERVICE_NAME, MDNS_PROTOCOL, "name", String(device_name));
+    MDNS.addService((const char*)MDNS_SERVICE_NAME, (const char*)MDNS_PROTOCOL, (uint16_t)MDNS_PORT);
+    
+    MDNS.addServiceTxt((const char*)MDNS_SERVICE_NAME, (const char*)MDNS_PROTOCOL, (const char*)"brd", (const char*)ARDUINO_BOARD);
+    MDNS.addServiceTxt((const char*)MDNS_SERVICE_NAME, (const char*)MDNS_PROTOCOL, (const char*)"ver", (const char*)FIRMWARE_VERSION);
+    MDNS.addServiceTxt((const char*)MDNS_SERVICE_NAME, (const char*)MDNS_PROTOCOL, (const char*)"mac", (const char*)WiFi.macAddress().c_str());
+    MDNS.addServiceTxt((const char*)MDNS_SERVICE_NAME, (const char*)MDNS_PROTOCOL, (const char*)"name", (const char*)device_name);
+    
     #if defined(ESP8266)
-      MDNS.addServiceTxt(MDNS_SERVICE_NAME, MDNS_PROTOCOL, "rom", toCleanString(formatBytesToString(ESP.getFlashChipRealSize())));
+      MDNS.addServiceTxt((const char*)MDNS_SERVICE_NAME, (const char*)MDNS_PROTOCOL, (const char*)"rom", (const char*)toCleanString(formatBytesToString(ESP.getFlashChipRealSize())));
 
     #elif defined(ESP32)
-      MDNS.addServiceTxt(MDNS_SERVICE_NAME, MDNS_PROTOCOL, "rom", toCleanString(formatBytesToString(ESP.getFlashChipSize())));
+      MDNS.addServiceTxt((const char*)MDNS_SERVICE_NAME, (const char*)MDNS_PROTOCOL, (const char*)"rom", (const char*)toCleanString(formatBytesToString(ESP.getFlashChipSize())));
     #endif
 
   #endif
 }
+

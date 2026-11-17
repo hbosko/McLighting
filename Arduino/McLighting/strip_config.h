@@ -109,7 +109,6 @@ void init_strip_config_path(){
 }
 
 void init_Strip() {
-
   uint16_t stripSize = WS2812FXStripSettings.stripSize;
   uint8_t RGBOrder   = WS2812FXStripSettings.RGBOrder;
   uint8_t pin        = WS2812FXStripSettings.pin;
@@ -143,10 +142,15 @@ void init_Strip() {
     #endif
 
     strip->start();
+
+    //  init_strip_state_path();
+
   }
 
   if(Mode != HOLD) Mode = SET_MODE;
   
-  save_strip_config_ticker.detach();
-  save_strip_config_ticker.once(save_ticker_config_time, Trigger_Save_Config);
+  //save_strip_config_ticker.detach();
+  //save_strip_config_ticker.once(save_ticker_config_time, Trigger_Save_Config);
+  
 }
+

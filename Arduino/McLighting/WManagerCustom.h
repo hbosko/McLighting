@@ -3,7 +3,7 @@ const IPAddress localIP(4, 4, 4, 1);
 const IPAddress gatewayIP(4, 4, 4, 1);
 const IPAddress subnetMask(255, 255, 255, 0);
 
-const String localIPURL = "http://4.4.4.1";
+const char* localIPURL = "http://4.4.4.1";
 
 #define MAX_CLIENTS 3
 #define WIFI_CHANNEL 11
@@ -38,15 +38,15 @@ bool wifi_connecting = false;
 
 //AP try to reconnect
 unsigned long lastTryInAp = 0;
-const unsigned long RECONNECT_INTERVAL = interval_1m; // 5 minut
+const unsigned long RECONNECT_INTERVAL = interval_1m;
 
-  // const char* give me sometimes weird characters & failing to (re)connect, going back to String (works fine)
-String hostNameParam = "hostname";
-String ssidParam = "ssid";
-String passParam = "pass";
+const char* hostNameParam = "hostname";
+const char* ssidParam = "ssid";
+const char* passParam = "pass";
 
-String ssid;
-String pass;
+char ssid[33] = "";
+char pass[65] = "";
+
 
 #ifdef ENABLE_MQTT
   const char* mqttServer = mqtt_server;
@@ -60,28 +60,29 @@ String pass;
 struct WifiManagerConfig {
   const char* WMhostName;
   uint8_t WMport;
-  String WMssid;
-  String WMpass;
+  char WMssid[33];
+  char WMpass[65];
     #ifdef ENABLE_MQTT
-      String WMmqttServer;
+      char WMmqttServer[65];
       uint16_t WMmqttPort;
-      String WMmqttUser;
-      String WMmqttPass;
+      char WMmqttUser[33];
+      char WMmqttPass[64];
     #endif
 };
 
 WifiManagerConfig WMconfig;
 
 void initWMConfigDefaults() {
-  WMconfig.WMhostName = device_name_c;
-  WMconfig.WMport = www_port;
-  WMconfig.WMssid = ssid;
-  WMconfig.WMpass = pass;
+  WMconfig.WMhostName = device_name;
+  WMconfig.WMport     = www_port;
+  
+  snprintf(WMconfig.WMssid, sizeof(WMconfig.WMssid), "%s", ssid);
+  snprintf(WMconfig.WMpass, sizeof(WMconfig.WMpass), "%s", pass);
   
   #ifdef ENABLE_MQTT
-    WMconfig.WMmqttServer = String(mqttServer);
-    WMconfig.WMmqttPort   = mqttPort;
-    WMconfig.WMmqttUser   = String(mqttUser);
-    WMconfig.WMmqttPass   = String(mqttPass);
+    snprintf(WMconfig.WMmqttServer, sizeof(WMconfig.WMmqttServer), "%s", mqttServer);
+    WMconfig.WMmqttPort = mqttPort;
+    snprintf(WMconfig.WMmqttUser, sizeof(WMconfig.WMmqttUser), "%s", mqttUser);
+    snprintf(WMconfig.WMmqttPass, sizeof(WMconfig.WMmqttPass), "%s", mqttPass);
   #endif
 }

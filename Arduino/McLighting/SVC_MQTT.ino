@@ -20,7 +20,7 @@ void publishMqtt(const char *topic, const char* msg, size_t len = 0) {
     char pubuf[128];
     snprintf_P(pubuf, sizeof(pubuf), sTopicFormat, mtype, device_name, topic);
     size_t payloadLen = (len > 0) ? len : strlen(msg);
-    mqttClient.publish(pubuf, 0, false, msg, payloadLen);
+      mqttClient.publish(pubuf, 0, false, msg, payloadLen);
     DEBUG_PRINTF("Publish topic: %s | PAYLOAD: %s\r\n", pubuf, msg);
   }
 }
@@ -31,7 +31,7 @@ void subscribeMqtt(const char *topic) {
   if (MQTT_connected == 1){
     char subuf[128];
     snprintf_P(subuf, sizeof(subuf), sTopicFormat, mtype, device_name, topic);
-    mqttClient.subscribe(subuf, 2);
+      mqttClient.subscribe(subuf, 2);
     DEBUG_PRINTF("subscribe Mqtt: %s\r\n", subuf);
   }
 }
@@ -48,8 +48,8 @@ void init_MQTT_async(){
   mqttClient.onPublish(onMqttPublish);
   mqttClient.onSubscribe(onMqttSubscribe);
   mqttClient.onUnsubscribe(onMqttUnsubscribe);
-  mqttClient.setCredentials(WMconfig.WMmqttUser.c_str(), WMconfig.WMmqttPass.c_str());
-  mqttClient.setServer(WMconfig.WMmqttServer.c_str(), WMconfig.WMmqttPort);
+  mqttClient.setCredentials(WMconfig.WMmqttUser, WMconfig.WMmqttPass);
+  mqttClient.setServer(WMconfig.WMmqttServer, WMconfig.WMmqttPort);
 }
 
 void connectToMqtt() {
@@ -68,7 +68,7 @@ void WiFiEvent(WiFiEvent_t event) {
     case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
       DEBUG_PRINTLN("WiFi lost connection");
       MQTT_connected = 0;
-      MQTT_client = "Disconnected";
+      //MQTT_client = "Disconnected";
       //mqttReconnectTimer.detach(); 
         break;
       default:
@@ -79,7 +79,7 @@ void WiFiEvent(WiFiEvent_t event) {
 
 void onMqttConnect(bool sessionPresent) {
   MQTT_connected = 1;
-  MQTT_client = "Connected";
+  //MQTT_client = "Connected";
   //mqttReconnectTimer.detach();
 
   DEBUG_PRINT("mqqtIP address: ");
@@ -94,13 +94,13 @@ void onMqttConnect(bool sessionPresent) {
     mqttClient.subscribe(subuf, 2);
   #endif
 
-  notifyClients(mqtt_announce, ESPinfo());
+  notifyClients(mqtt_announce, ESPinfo().c_str());
 }
 
 void onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
   DEBUG_PRINTF("Disconnected from MQTT. Reason: %d\n", (int)reason);
   MQTT_connected = 0;
-  MQTT_client = "Disconnected";
+  //MQTT_client = "Disconnected";
 
   if (WiFi.status() == WL_CONNECTED) {
     //mqttReconnectTimer.once(10, connectToMqtt);
@@ -132,7 +132,7 @@ void onMqttMessage(const char* topic, char* payload, AsyncMqttClientMessagePrope
   #endif
 
   if (len == 4 && strncmp(payload, "ping", 4) == 0) {
-    notifyClients(mqtt_announce, ESPinfo());
+    notifyClients(mqtt_announce, ESPinfo().c_str());
   }
 
   if (strstr(topic, "reboot") != NULL) {

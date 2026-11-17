@@ -254,6 +254,7 @@ void CheckPayload(const char* payload, size_t len) {
   else if (payload[0] == '*') {
     handleSetAllMode(payload);
       DEBUG_PRINTLN("Set main STATIC color to: ");
+      DEBUG_PRINTLN(payload);
     //notifyClients(notify_evt, notify_OK); // DONT sPAM!
 
       save_strip_state_ticker.detach();

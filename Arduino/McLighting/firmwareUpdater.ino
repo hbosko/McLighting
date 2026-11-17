@@ -38,42 +38,44 @@ void init_firmwareUpdater(){
 
 String fw_update(uint8_t state, const char* msg){
   JsonDocument doc;
-    JsonObject fw_Data_info = doc["info"].to<JsonObject>();
+  JsonObject fw_Data_info = doc["info"].to<JsonObject>();
 
   if (state == FW_status_FINISH){
-    fw_Data_info[F("st")] = F("Finish");
+    fw_Data_info[F("st")]         = F("Finish");
   }
   else if (state == FW_status_START){
-    fw_Data_info[F("upgr")] = F("Start");
+    fw_Data_info[F("upgr")]       = F("Start");
   }
   else if (state == FW_status_ERROR){
-    fw_Data_info[F("st")] = F("Error");
-    fw_Data_info[F("msg")] = msg;
+    fw_Data_info[F("st")]         = F("Error");
+    fw_Data_info[F("msg")]        = msg;
   }
   else if (state == FW_status_FAILED){
-    fw_Data_info[F("st")] = F("Failed");
-    fw_Data_info[F("msg")] = msg;
+    fw_Data_info[F("st")]         = F("Failed");
+    fw_Data_info[F("msg")]        = msg;
   }
   else if (state == FW_status_PROGRESS){
-    fw_Data_info[F("st")] = F("Progress");
-    fw_Data_info[F("msg")] = msg;
+    fw_Data_info[F("st")]         = F("Progress");
+    fw_Data_info[F("msg")]        = msg;
   }
 
-  fw_Data_info[F("name")]  = device_name;
-  fw_Data_info[F("ip")]    = WiFi.localIP().toString();
-  fw_Data_info[F("brd")]   = F(ARDUINO_BOARD);
-  fw_Data_info[F("ver")]   = FIRMWARE_VERSION;
+  fw_Data_info[F("name")]         = device_name;
+  fw_Data_info[F("ip")]           = WiFi.localIP().toString();
+  fw_Data_info[F("brd")]          = F(ARDUINO_BOARD);
+  fw_Data_info[F("ver")]          = FIRMWARE_VERSION;
   
   #ifdef ENABLE_MQTT_
-    fw_Data_info[F("modul")] = MODULE_TYPE;
-    fw_Data_info[F("sub_modul")]    = MODULE_TYPE;
+    fw_Data_info[F("modul")]      = MODULE_TYPE;
+    fw_Data_info[F("sub_modul")]  = MODULE_TYPE;
   #endif
 
-  String json = "";
-  serializeJson(doc, json);
-  return json;
+  StreamString jsonResponse;
+  jsonResponse.reserve(512);
+  
+  serializeJson(doc, jsonResponse);
+  
+  return jsonResponse;
 }
-
 
 
 void update_started() {
@@ -82,7 +84,7 @@ void update_started() {
 
   #ifdef ENABLE_MQTT
     //publishMqtt(mqtt_firmware_status, fw_update(FW_status_START, "0").c_str());
-    notifyClients(mqtt_firmware_status, fw_update(FW_status_START, "0"));
+    notifyClients(mqtt_firmware_status, fw_update(FW_status_START, "0").c_str());
   #endif
 
     OTA_fw_update_running = true;
@@ -94,7 +96,7 @@ void update_finished() {
 
   #ifdef ENABLE_MQTT
     //publishMqtt(mqtt_firmware_status, fw_update(FW_status_FINISH, "0").c_str());
-    notifyClients(mqtt_firmware_status, fw_update(FW_status_FINISH, "0"));
+    notifyClients(mqtt_firmware_status, fw_update(FW_status_FINISH, "0").c_str());
   #endif
 
     OTA_fw_update_running = true;
@@ -110,11 +112,11 @@ void update_progress(int cur, int total) {
   
   #ifdef ENABLE_MQTT
     static int last_reported_percent = -1;
-    // MQTT obvestilo vsakih 10%
+    //  obvestilo vsakih 10%
     if (percent % 10 == 0 && percent != last_reported_percent) { 
       last_reported_percent = percent;
       //publishMqtt(mqtt_firmware_status, fw_update(FW_status_PROGRESS, sendData).c_str());
-      notifyClients(mqtt_firmware_status, fw_update(FW_status_PROGRESS, sendData));
+      notifyClients(mqtt_firmware_status, fw_update(FW_status_PROGRESS, sendData).c_str());
     }
   #endif
   
@@ -128,7 +130,7 @@ void update_error(int err) {
   Serial.printf("FW CALLBACK: HTTP update fatal error code %d\n", err);
   #ifdef ENABLE_MQTT
     //publishMqtt(mqtt_firmware_status, fw_update(FW_status_ERROR, sendData).c_str());
-    notifyClients(mqtt_firmware_status, fw_update(FW_status_ERROR, sendData));
+    notifyClients(mqtt_firmware_status, fw_update(FW_status_ERROR, sendData).c_str());
   #endif
   OTA_fw_update_running = false;
 }
@@ -138,7 +140,7 @@ void update_failed(const char* err) {
   DEBUG_PRINTLN(err);
   #ifdef ENABLE_MQTT
     //publishMqtt(mqtt_firmware_status, fw_update(FW_status_FAILED, err).c_str());
-    notifyClients(mqtt_firmware_status, fw_update(FW_status_FAILED, err));
+    notifyClients(mqtt_firmware_status, fw_update(FW_status_FAILED, err).c_str());
   #endif
   OTA_fw_update_running = false;
 }

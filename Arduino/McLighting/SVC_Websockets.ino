@@ -9,20 +9,22 @@ void init_webSockets() {
 
 void wsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
   
+ // if (apActive) { return;  } // disable websocket if in AP mode! BufferOverFlow... OOM!
+
   if (client == nullptr) return;
 
   if (type == WS_EVT_CONNECT) {
-    WS_client = client->remoteIP().toString();
+      snprintf(WS_client, sizeof(WS_client), "%s", client->remoteIP().toString().c_str());
     
-    DEBUG_PRINTF("WS conected IP: %s\r\n", WS_client.c_str());
-    notifyClients(notify_evt, WS_client.c_str());
+    DEBUG_PRINTF("WS conected IP: %s\r\n", WS_client);
+    notifyClients(notify_evt, WS_client);
   } 
   
   else if (type == WS_EVT_DISCONNECT) {
     DEBUG_PRINT(WS_client);
     DEBUG_PRINTLN(F(" - WS disconected."));
     
-    //WS_client = "Disconnected";
+    snprintf(WS_client, sizeof(WS_client), "Disconnected");
   } 
   
   else if (type == WS_EVT_DATA) {
@@ -41,7 +43,7 @@ void wsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventTyp
   
   else if (type == WS_EVT_ERROR) {
     DEBUG_PRINTLN(F("WS err."));
-    WS_client = "Error";
+    snprintf(WS_client, sizeof(WS_client), "Error");
   } 
   
   else if (type == WS_EVT_PONG) {

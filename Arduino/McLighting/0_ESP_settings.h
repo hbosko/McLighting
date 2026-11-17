@@ -2,19 +2,19 @@
 const char* FIRMWARE_VERSION = "3.0.3";
 
 const char* hardCode_SSID    = "SSID";
-const char* hardCode_PASS    = "PWD";
+const char* hardCode_PASS    = "pass";
 
 const char* softAP_PASS      = "12345678";
 
 const char* mqtt_server      = "10.10.10.10";
 const int   mqtt_port        = 1883;
-const char* mqtt_user        = "usr";
-const char* mqtt_password    = "pwd";
+const char* mqtt_user        = "user";
+const char* mqtt_password    = "password";
 
 const char* login_username   = "admin";
 const char* login_password   = "admin";
 
-const char* sketch_file      = "McLightning.ino";
+const char* sketch_file      = "McLightning_3.ino";
 
 const char* ws_path          = "/ws";
 
@@ -28,36 +28,37 @@ const char* ws_path          = "/ws";
   int8_t Dallass_pin = -1;
 #endif
 
-  //#define MDNS_DEVICE_NAME String(device_name)
-  #define MDNS_SERVICE_NAME FW_BOARD_TYPE_STR
+
+  const uint8_t www_port = 80;
+  char device_name[20] = ""; 
+
+  char softAPname[32] = ""; 
+  static char chipID_buffer[20] = {0};
+
+
+  #define MDNS_SERVICE_NAME device_name
   #define MDNS_PROTOCOL "tcp"
   #define MDNS_PORT 5600
 
-  const uint8_t www_port = 80;
-  const char* device_name_c;
-    char hostname[20];
-  char device_name[20];
 
-
-String softAPname = "";
-static char chipID_buffer[20] = {0};
 #if defined(ESP8266)
   void init_ChipID() {
     snprintf(chipID_buffer, sizeof(chipID_buffer), "%06x", (uint32_t)ESP.getChipId());
-    softAPname = String("ESP8266_") + String(chipID_buffer);
+    snprintf(softAPname, sizeof(softAPname), "ESP8266_%s", chipID_buffer);
   }
   const char* chipID = chipID_buffer;
-  //String chipID_str = String(chipID_buffer);
-    #define chipID_str String(ESP.getChipId(), HEX)
+  
+  #define chipID_str chipID_buffer
 
 #elif defined(ESP32)
   void init_ChipID() {
     snprintf(chipID_buffer, sizeof(chipID_buffer), "%012llx", (uint64_t)ESP.getEfuseMac());
-    softAPname = String("ESP32_") + String(chipID_buffer);
+    snprintf(softAPname, sizeof(softAPname), "ESP32_%s", chipID_buffer);
   }
-  #define chipID_str String((uint32_t)ESP.getEfuseMac(), HEX)
+  #define chipID_str chipID_buffer
 
 #endif
+
 
 
 static const char mqtt_firmware[]        = "firmware";

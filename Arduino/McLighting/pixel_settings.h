@@ -1,6 +1,13 @@
-#define LED_PIN 5
-#define NUMLEDS 50
+
+// default states, first boot
+
+#define LED_PIN 2
+#define NUMLEDS 100
 #define LED_KHZ_TYPE 1   // 1 = 800kHz (WS2812B), 2 = 400kHz (WS2811)
+
+int ws2812fx_mode = 17;
+int ws2812fx_speed = 156;
+int brightness = 196;
 
 #define ENABLE_LEGACY_ANIMATIONS
 #define CUSTOM_WS2812FX_ANIMATIONS
@@ -26,10 +33,6 @@ uint32_t autoParams[4][4] = {
 
 MODE prevmode = Mode;
 
-int ws2812fx_speed = 196;
-int brightness = 196;
-int ws2812fx_mode = 0;
-
 struct ledstate
 {
   uint8_t red;
@@ -39,4 +42,4 @@ struct ledstate
 
 typedef struct ledstate LEDState;
 LEDState ledstates[NUMLEDS];
-LEDState main_color = { 255, 0, 0 };
+LEDState main_color = { 64, 128, 255 };

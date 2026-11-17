@@ -9,47 +9,6 @@ void custom_webserver_path(){
     serverOn_UDP();
   #endif
 
-/* 
-  server.on("/px/modes", HTTP_GET, [](AsyncWebServerRequest *request) {
-    AsyncWebServerResponse *response = request->beginChunkedResponse("application/json", [](uint8_t *buffer, size_t maxLen, size_t index) -> size_t {
-      static uint16_t currentMode = 0;
-      
-      if (index == 0) {
-        currentMode = 0;
-      }
-
-      uint16_t modeCount = strip->getModeCount();
-      if (currentMode >= modeCount) {
-        return 0;
-      }
-
-      String chunk = "";
-      if (currentMode == 0) {
-          chunk += "[";
-      }
-
-      chunk += "{\"id\":" + String(currentMode) + ",\"nm\":\"" + String(strip->getModeName(currentMode)) + "\"}";
-      currentMode++;
-
-      if (currentMode < modeCount) {
-          chunk += ",";
-      } else {
-          chunk += "]";
-      }
-
-      size_t len = chunk.length();
-      if (len > maxLen) {
-          len = maxLen;
-      }
-      memcpy(buffer, chunk.c_str(), len);
-      return len;
-    }, NULL);
-
-    response->addHeader("Access-Control-Allow-Origin", "*");
-    request->send(response);
-  });
-*/
-    // OOM!
   server.on(serverURL_getModes, HTTP_GET, [](AsyncWebServerRequest * request) {
     AsyncResponseStream *response = request->beginResponseStream("application/json");
     //palette_json(*response); //FASTLED
@@ -71,7 +30,9 @@ void custom_webserver_path(){
     server_builtin_palettes();
     handler_save_palettes();
 
-  /* // websockets faster.
+  /* // websockets faster, this stable... 
+  // TODO: if AP mode, dont use WS... will fill buffer.
+
     server.on("/set_brightness", HTTP_GET, [](AsyncWebServerRequest * request) {
       if (request->hasParam("v")) {
         int val = request->getParam("v")->value().toInt();
@@ -158,7 +119,6 @@ void custom_webserver_path(){
 
 }
 
-
 void init_WEB_server(){
   HTTP_enabled = 1;
 
@@ -172,20 +132,25 @@ void init_WEB_server(){
 
     server.on("/", HTTP_ANY, [](AsyncWebServerRequest * request) {
       if (request->client() != nullptr) {
-        HTTP_client = request->client()->remoteIP().toString();
+        snprintf(HTTP_client, sizeof(HTTP_client), "%s", request->client()->remoteIP().toString().c_str());
       }
 
-      AsyncWebServerResponse *response;
       if (apActive) {
-        response = request->beginResponse(200, "text/html", SendHTML());
+        AsyncResponseStream *response = request->beginResponseStream("text/html");
+        response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response->addHeader("Pragma", "no-cache");
+        response->addHeader("Expires", "-1");
+        
+        SendHTMLStream(response);
+        request->send(response);
       } else {
-        response = request->beginResponse_P(200, "text/html", index_html_gz, index_html_gz_len);
+        AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", index_html_gz, index_html_gz_len);
         response->addHeader("Content-Encoding", "gzip");
+        response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response->addHeader("Pragma", "no-cache");
+        response->addHeader("Expires", "-1");
+        request->send(response);
       }
-      response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-      response->addHeader("Pragma", "no-cache");
-      response->addHeader("Expires", "-1");
-      request->send(response);
     });
 
     server.on("/home", HTTP_GET, [](AsyncWebServerRequest * request) {
@@ -198,13 +163,19 @@ void init_WEB_server(){
 
     server.on("/", HTTP_ANY, [](AsyncWebServerRequest *request) {
       if (request->client() != nullptr) {
-        HTTP_client = request->client()->remoteIP().toString();
+        snprintf(HTTP_client, sizeof(HTTP_client), "%s", request->client()->remoteIP().toString().c_str());
       }
 
-      AsyncWebServerResponse *response;
       if (apActive) {
-        response = request->beginResponse(200, "text/html", SendHTML());
+        AsyncResponseStream *response = request->beginResponseStream("text/html");
+        response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response->addHeader("Pragma", "no-cache");
+        response->addHeader("Expires", "-1");
+        
+        SendHTMLStream(response);
+        request->send(response);
       } else {
+        AsyncWebServerResponse *response;
         if (LittleFS.exists("/index.html")) {
           response = request->beginResponse(LittleFS, "/index.html", "text/html");
         }
@@ -216,11 +187,11 @@ void init_WEB_server(){
           DEBUG_PRINTLN("NO index.html redirecting...");
           return;
         }
+        response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response->addHeader("Pragma", "no-cache");
+        response->addHeader("Expires", "-1");
+        request->send(response);
       }
-      response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-      response->addHeader("Pragma", "no-cache");
-      response->addHeader("Expires", "-1");
-      request->send(response);
     });
 
     server.on("/home", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -240,22 +211,14 @@ void init_WEB_server(){
 
   server.on(serverURL_ESP_info, HTTP_GET, [](AsyncWebServerRequest * request) {
     AsyncResponseStream *response = request->beginResponseStream("application/json");
-    if (response) {
-      String jsonBuffer;
-      jsonBuffer.reserve(1024);
-        ESPinfo(jsonBuffer);
-      response->print(jsonBuffer);
-      request->send(response);
-    } else {
-      request->send(500, "text/plain", "Neuspešna alokacija streama");
-    }
+    response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    response->addHeader("Pragma", "no-cache");
+    response->addHeader("Expires", "-1");
+    
+    ESPinfo(*response); 
+    request->send(response);
   });
 
-  /*
-    server.on(serverURL_ESP_info, HTTP_GET, [](AsyncWebServerRequest * request) {
-      request->send(200, "application/json", ESPinfo());
-    });
-  */
   server.on(serverURL_ESP_CP, HTTP_ANY, [](AsyncWebServerRequest * request) {
     /*
     if (!request->authenticate(login_username, login_password)) {
@@ -275,7 +238,9 @@ void init_WEB_server(){
   server.on(serverURL_BRD_sett_save, HTTP_ANY, handle_esp_settings_save);
 
   server.on(serverURL_BRD_sett_html, HTTP_GET, [](AsyncWebServerRequest * request) {
-      Settings_client = request->client()->remoteIP().toString();
+      if (request->client() != nullptr) {
+        snprintf(Settings_client, sizeof(Settings_client), "%s", request->client()->remoteIP().toString().c_str());
+      }
     AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", brd_settings_html_gz, brd_settings_html_gz_len);
     response->addHeader("Content-Encoding", "gzip");
     response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -311,9 +276,9 @@ void init_WEB_server(){
     server.serveStatic("/", LittleFS, "/");
 
   server.onNotFound([](AsyncWebServerRequest *request){
-    if (request->client() != nullptr) {
-      NotFound_client = request->client()->remoteIP().toString();
-    }
+      if (request->client() != nullptr) {
+        snprintf(NotFound_client, sizeof(NotFound_client), "%s", request->client()->remoteIP().toString().c_str());
+      }
 
     AsyncWebServerResponse *response = request->beginResponse_P(404, "text/html", notFound_html_gz, notFound_html_gz_len);
     response->addHeader("Content-Encoding", "gzip");
@@ -321,7 +286,7 @@ void init_WEB_server(){
     response->addHeader("Pragma", "no-cache");
     response->addHeader("Expires", "-1");
     request->send(response);
-    DEBUG_PRINTF(" 404 od [%s] -> http://%s%s\n", NotFound_client.c_str(), request->host().c_str(), request->url().c_str());
+    DEBUG_PRINTF(" 404 od [%s] -> http://%s%s\n", NotFound_client, request->host().c_str(), request->url().c_str());
   });
 
 
@@ -334,31 +299,16 @@ void init_WEB_server(){
 void WIFIMANAGER_server_path(){
 
   server.on(serverURL_edit_ap, HTTP_ANY, [](AsyncWebServerRequest *request) {
-    if (request->client() != nullptr) {
-      wifi_edit_client = request->client()->remoteIP().toString();
-    }
-
-  /*
-    if (client_loged_out >= 1) {
-      client_loged_out = 0;
-      AsyncWebServerResponse *response = request->beginResponse(401, "text/plain", "Odjava uspešna.");
-      response->addHeader("WWW-Authenticate", "Basic realm='Logout'");
-      request->send(response);
-      DEBUG_PRINTLN("Served AP LOGOUT Page (Cleared browser session)");
-      return;
-    }
-
-    if (firstBoot == false) {
-      if (!request->authenticate(edit_AP_username, edit_AP_password)) {
-        return request->requestAuthentication();
+      if (request->client() != nullptr) {
+        snprintf(wifi_edit_client, sizeof(wifi_edit_client), "%s", request->client()->remoteIP().toString().c_str());
       }
-    }
-  */
-    AsyncWebServerResponse *response = request->beginResponse(200, "text/html", SendHTML());
-    response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-    response->addHeader("Pragma", "no-cache");
-    response->addHeader("Expires", "-1");
-    request->send(response);
+
+    AsyncResponseStream *response = request->beginResponseStream("text/html");
+      response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      response->addHeader("Pragma", "no-cache");
+      response->addHeader("Expires", "-1");
+        SendHTMLStream(response);
+      request->send(response);
     DEBUG_PRINTLN("Served AP EDIT Page");
   });
 

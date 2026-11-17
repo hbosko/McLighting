@@ -32,12 +32,12 @@ void scanWifi(Print& output) {
 
       JsonObject netObj = networks.add<JsonObject>();
       
-      netObj[F("rssi")]    = WiFi.RSSI(idx);
-      netObj[F("ql")] = getRSSIasQuality(WiFi.RSSI(idx));
-      netObj[F("ssid")]    = WiFi.SSID(idx);
-      netObj[F("bssid")]   = WiFi.BSSIDstr(idx);
-      netObj[F("ch")] = WiFi.channel(idx);
-      netObj[F("secure")]  = WiFi.encryptionType(idx);
+      netObj[F("rssi")]     = WiFi.RSSI(idx);
+      netObj[F("ql")]       = getRSSIasQuality(WiFi.RSSI(idx));
+      netObj[F("ssid")]     = WiFi.SSID(idx);
+      netObj[F("bssid")]    = WiFi.BSSIDstr(idx);
+      netObj[F("ch")]       = WiFi.channel(idx);
+      netObj[F("secure")]   = WiFi.encryptionType(idx);
       
       #if defined(ESP8266)
         netObj[F("hidden")] = WiFi.isHidden(idx);
@@ -66,13 +66,13 @@ void scan_i2c(Print& output) {
     if (error == 0) {
       char hexStr[8];
       snprintf(hexStr, sizeof(hexStr), "0x%02X", address);
-      addresses.add(String(hexStr));
+      addresses.add(hexStr);
       foundAny = true;
     }
     else if (error == 4) {
       char hexStr[16];
       snprintf(hexStr, sizeof(hexStr), "0x%02X_error", address);
-      addresses.add(String(hexStr));
+      addresses.add(hexStr);
       foundAny = true;
     }
     

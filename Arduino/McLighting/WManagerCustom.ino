@@ -36,34 +36,67 @@ void initAP_path() {
   server.on("/ncsi.txt", HTTP_ANY, [](AsyncWebServerRequest *request) {request->send(200, "text/plain", "Microsoft NCSI");});
 
   server.on("/scan-async", HTTP_GET, [](AsyncWebServerRequest *request) {
-    #if defined(ESP8266)
-      WiFi.mode(WIFI_AP_STA);
-      delay(10);
-      WiFi.scanDelete();
-      WiFi.scanNetworks(true);
-    #elif defined(ESP32)
-      WiFi.mode(WIFI_AP_STA);
-      WiFi.scanDelete();
-      WiFi.scanNetworks(true, true);
-    #endif
-    request->send(200, "text/plain", "OK");
+    WiFi.scanNetworks(true); 
+    request->send(200, "text/plain", F("OK"));
   });
 
-  server.on("/get-networks", HTTP_GET, [](AsyncWebServerRequest *request) {
+    server.on("/get-networks", HTTP_GET, [](AsyncWebServerRequest *request) {
     int n = WiFi.scanComplete();
 
     if (n == -1) {
-      request->send(200, "text/html", "<div>⏳ Osveževanje rezultatov... <br><br><a href='#' class='scan-btn' onclick='osveziSeznam(); return false;'>PRIKAŽI OMREŽJA</a></div>");
+      request->send(200, "text/html", F("<div>⏳ Refresh.ing... <br><br><a href='#' class='scan-btn' onclick='osveziSeznam(); return false;'>SCAN WiF</a></div>"));
     } else if (n == -2 || n == 0) {
-      request->send(200, "text/html", "<div>❌ Nobenega omrežja ni v dosegu. <br><br><a href='#' class='scan-btn' onclick='sproziInOsvezi(); return false;'>POSKUSI PONOVNO</a></div>");
+      request->send(200, "text/html", F("<div>❌ No WifI in range. <br><br><a href='#' class='scan-btn' onclick='sproziInOsvezi(); return false;'>reTRY</a></div>"));
     } else {
-      request->send(200, "text/html", scanWifi_SSID());
-    #if defined(ESP8266)
-      WiFi.mode(WIFI_AP);
-      wifi_station_disconnect();
-    #endif
+      
+      AsyncResponseStream *response = request->beginResponseStream("text/html");
+
+      int indices[n];
+      for (int i = 0; i < n; i++) indices[i] = i;
+
+      //  sortiranje
+      for (int i = 0; i < n; i++) {
+        for (int j = i + 1; j < n; j++) {
+          if (WiFi.RSSI(indices[j]) > WiFi.RSSI(indices[i])) {
+            std::swap(indices[i], indices[j]);
+          }
+        }
+      }
+
+      // Filtriranje duplikatov
+      for (int i = 0; i < n; i++) {
+        if (indices[i] == -1) continue;
+        String cssid = WiFi.SSID(indices[i]);
+        for (int j = i + 1; j < n; j++) {
+          if (cssid == WiFi.SSID(indices[j])) {
+            indices[j] = -1;
+          }
+        }
+      }
+
+      char qualBuf[8];
+
+      for (int i = 0; i < n; i++) {
+        if (indices[i] == -1) continue;
+        if (WiFi.SSID(indices[i]).length() == 0) continue;
+
+        int32_t rssi = WiFi.RSSI(indices[i]);
+        int quality = (rssi <= -100) ? 0 : (rssi >= -50) ? 100 : 2 * (rssi + 100);
+        
+        snprintf(qualBuf, sizeof(qualBuf), "%d", quality);
+
+        response->print(F("<a href='#' class='link' onclick='c(this); return false;'>📶 <span>"));
+        response->print(WiFi.SSID(indices[i]));
+        response->print(F("</span> ("));
+        response->print(qualBuf);
+        response->print(F("%)</a>\n"));
+      }
+
+      request->send(response);
+      WiFi.scanDelete();
     }
   });
+
 
   server.on("/generate_204", HTTP_ANY, [](AsyncWebServerRequest *request) {request->redirect(localIPURL);});
   server.on("/gen_204", HTTP_ANY, [](AsyncWebServerRequest *request) {request->redirect(localIPURL);});
@@ -72,7 +105,10 @@ void initAP_path() {
   server.on("/canonical.html", HTTP_ANY, [](AsyncWebServerRequest *request) {request->redirect(localIPURL);});
   server.on("/success.txt", HTTP_ANY, [](AsyncWebServerRequest *request) {request->send(200, "text/plain", "success");});
   server.on("/favicon.ico", HTTP_ANY, [](AsyncWebServerRequest *request) {request->send(404);});
-
+  server.on("/success.txt", HTTP_ANY, [](AsyncWebServerRequest *request) {request->send(200, "text/plain", F("success"));});
+  server.on("/library/test/success.html", HTTP_ANY, [](AsyncWebServerRequest *request) {request->send(200, "text/html", F("<HTML><HEAD><TITLE>Success</TITLE></HEAD><BODY>Success</BODY></HTML>"));});
+ 
+ 
   /*
     server.on("/", HTTP_ANY, [](AsyncWebServerRequest *request) {
       AsyncWebServerResponse *response = request->beginResponse(200, "text/html", SendHTML());
@@ -82,10 +118,15 @@ void initAP_path() {
       request->send(response);
     });
   */
+
   server.onNotFound([](AsyncWebServerRequest *request) {
-    String host = request->host();
-    if (host.indexOf("4.4.4.1") == -1 && (request->url().indexOf(".html") != -1 || request->url() == "/")) {
+    const String host = request->host();
+    
+    if (strstr(host.c_str(), "4.4.4.1") == nullptr) {
       request->redirect(localIPURL);
+      
+      DEBUG_PRINT("Captive Portal preusmeril neznan host: ");
+      DEBUG_PRINTLN(host.c_str());
     } else {
       request->send(404);
     }
@@ -162,7 +203,7 @@ void init_CUSTOM_WIFI() {
     apActive = true;
     firstBoot = true;
 
-    startSoftAccessPoint(softAPname.c_str(), softAP_PASS, localIP, gatewayIP);
+    startSoftAccessPoint(softAPname, softAP_PASS, localIP, gatewayIP);
 
   } else {
     DEBUG_PRINTLN("connecting to SSID: ");
@@ -220,10 +261,10 @@ void loop_CUSTOM_WIFI() {
       WiFi.softAPdisconnect(true);
       WiFi.mode(WIFI_STA);
       
-      DEBUG_PRINTLN("\nWi-Fi successfully connected!");
+      DEBUG_PRINTLN("Wi-Fi successfully connected!");
     }
     else if (millis() - wifiMillis >= 15000) { 
-      DEBUG_PRINTLN("\nTimeout! Wifi conn failed.");
+      DEBUG_PRINTLN("Timeout! Wifi conn failed.");
       AP_count++;
       wifi_connecting = false;
       WIFI_connected = 0;
@@ -234,7 +275,7 @@ void loop_CUSTOM_WIFI() {
       if (AP_count >= 3) {
         apActive = true;
         DEBUG_PRINTLN("SoftAP warmup...");
-        startSoftAccessPoint(softAPname.c_str(), softAP_PASS, localIP, gatewayIP);
+        startSoftAccessPoint(softAPname, softAP_PASS, localIP, gatewayIP);
       }
     }
   }
@@ -255,15 +296,15 @@ void loop_CUSTOM_WIFI() {
         if (WiFi.status() == WL_DISCONNECTED) { wifi_station_disconnect(); }
       #endif
 
-      if (lastTryInAp == 0) { lastTryInAp = millis(); }
-
-      if (wifi_connecting == false && (millis() - lastTryInAp >= RECONNECT_INTERVAL)) {
-        lastTryInAp = millis();
-        DEBUG_PRINTLN("\n[Ozadje] Try to connect to home AP/Router...");
-        WiFi.begin(WMconfig.WMssid, WMconfig.WMpass);
-        wifiMillis = millis();
-        wifi_connecting = true; 
-      }
+        if (lastTryInAp == 0) { lastTryInAp = millis(); }
+        if (wifi_connecting == false && (millis() - lastTryInAp >= RECONNECT_INTERVAL)) {
+          lastTryInAp = millis();
+          DEBUG_PRINTLN("\n[WifI bg] Try to connect to AP/Router...");
+          WiFi.begin(WMconfig.WMssid, WMconfig.WMpass);
+          wifiMillis = millis();
+          wifi_connecting = true; 
+        }
+      
     }
 
     #ifdef ENABLE_MQTT
@@ -274,18 +315,20 @@ void loop_CUSTOM_WIFI() {
   }
 }
 
-
 void handle_wm_cmd(AsyncWebServerRequest *request) {
   int params = request->params();
 
-  String odzivStatus = "NAPACNO GESLO";
+  const char* odzivStatus = "NAPACNO GESLO";
 
   for (int i = 0; i < params; i++) {
     const AsyncWebParameter *p = request->getParam(i);
     DEBUG_PRINTF("Param name: %s | value: %s\r\n", p->name().c_str(), p->value().c_str());
 
-    if (p->name() == "rbt") {
-      if (p->value() == "1") { // aka.. password, change
+    const char* pName = p->name().c_str();
+    const char* pValue = p->value().c_str();
+
+    if (strcmp(pName, "rbt") == 0) {
+      if (strcmp(pValue, "1") == 0) { 
         notifyClients(notify_evt, notify_OK);
         odzivStatus = "OK - Rebooting...";
         esp_reboot = true;
@@ -294,8 +337,8 @@ void handle_wm_cmd(AsyncWebServerRequest *request) {
       }
     }
 
-    if (p->name() == "wm") {
-      if (p->value() == "1") { // aka.. password, change
+    if (strcmp(pName, "wm") == 0) {
+      if (strcmp(pValue, "1") == 0) { 
         notifyClients(notify_evt, "Reboot and switch to AP mode");
         odzivStatus = "OK - Switching to AP Mode... and RebooT";
         deleteFile(wifiPath);
@@ -321,61 +364,67 @@ void handle_wifisave(AsyncWebServerRequest *request) {
     DEBUG_PRINTF("Param name: %s | value: %s\r\n", p->name().c_str(), p->value().c_str());
 
     if (p->isPost() || request->method() == HTTP_POST) {
-      if (p->name() == hostNameParam) {
-        strncpy(device_name, p->value().c_str(), sizeof(device_name) - 1);
+      const char* pName = p->name().c_str();
+      const char* pValue = p->value().c_str();
+
+      if (strcmp(pName, hostNameParam) == 0) {
+        strncpy(device_name, pValue, sizeof(device_name) - 1);
         device_name[sizeof(device_name) - 1] = '\0';
-        device_name_c = device_name;
         WMconfig.WMhostName = device_name;
         wifiSpremenjen = true;
       }
 
-      if (p->name() == ssidParam) {
-        WMconfig.WMssid = p->value();
+      if (strcmp(pName, ssidParam) == 0) {
+        snprintf(WMconfig.WMssid, sizeof(WMconfig.WMssid), "%s", pValue);
         wifiSpremenjen = true;
       }
 
-      if (p->name() == passParam) {
-        WMconfig.WMpass = p->value();
+      if (strcmp(pName, passParam) == 0) {
+        snprintf(WMconfig.WMpass, sizeof(WMconfig.WMpass), "%s", pValue);
         wifiSpremenjen = true;
       }
 
       #ifdef ENABLE_MQTT
-        if (p->name() == mqqtServerParam) {
-          WMconfig.WMmqttServer = p->value();
+        if (strcmp(pName, mqqtServerParam) == 0) {
+          snprintf(WMconfig.WMmqttServer, sizeof(WMconfig.WMmqttServer), "%s", pValue);
         }
-        if (p->name() == mqqtPortParam) {
+        if (strcmp(pName, mqqtPortParam) == 0) {
           WMconfig.WMmqttPort = p->value().toInt();
         }
-        if (p->name() == mqqtUserParam) {
-          WMconfig.WMmqttUser = p->value();
+        if (strcmp(pName, mqqtUserParam) == 0) {
+          snprintf(WMconfig.WMmqttUser, sizeof(WMconfig.WMmqttUser), "%s", pValue);
         }
-        if (p->name() == mqqtPasswdParam) {
-          WMconfig.WMmqttPass = p->value();
+        if (strcmp(pName, mqqtPasswdParam) == 0) {
+          snprintf(WMconfig.WMmqttPass, sizeof(WMconfig.WMmqttPass), "%s", pValue);
         }
       #endif
     }
   }
 
   if (wifiSpremenjen) {
-
     write_Wifi_to_FS(wifiPath);
+    DEBUG_PRINTLN("WiFi Setting saved to FS.");
 
-    DEBUG_PRINTLN("Setting saved to FS.");
+    AsyncResponseStream *response = request->beginResponseStream("text/html");
 
-    String uspeh = "<!DOCTYPE html><html lang='sl'><head><meta charset='UTF-8'>";
-    uspeh += "<meta name='viewport' content='width=device-width, initial-scale=1.0'>";
-    uspeh += "<style>";
-    uspeh += "body{background-color:#1e222b; color:#fff; display:flex; justify-content:center; align-items:center; min-height:100vh; margin:0; padding:15px;}";
-    uspeh += ".box{background-color:#2d323f; padding:30px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.3); text-align:center; max-width:400px; width:100%;}";
-    uspeh += "h2{color:#4fd1c5; margin-bottom:15px; font-size:1.4rem;}";
-    uspeh += "p{color:#a0aec0; font-size:0.95rem; line-height:1.5;}";
-    uspeh += "</style></head><body>";
-    uspeh += "<div class='box'>";
-    uspeh += "<h2>Saved!</h2>";
-    uspeh += "<p>Omežje: <br><strong>" + WMconfig.WMssid + "</strong></p>";
-    uspeh += "</div></body></html>";
+    response->print(F("<!DOCTYPE html><html lang='sl'><head><meta charset='UTF-8'>"));
+    response->print(F("<meta name='viewport' content='width=device-width, initial-scale=1.0'>"));
+    response->print(F("<style>"));
+    response->print(F("body{background-color:#1e222b; color:#fff; display:flex; justify-content:center; align-items:center; min-height:100vh; margin:0; padding:15px;}"));
+    response->print(F(".box{background-color:#2d323f; padding:30px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.3); text-align:center; max-width:400px; width:100%;}"));
+    response->print(F("h2{color:#4fd1c5; margin-bottom:15px; font-size:1.4rem;}"));
+    response->print(F("p{color:#a0aec0; font-size:0.95rem; line-height:1.5;}"));
+    response->print(F("</style></head><body>"));
+    response->print(F("<div class='box'>"));
+    response->print(F("<h2>Saved!</h2>"));
+    response->print(F("<p>Omežje: <br><strong>"));
+    
+    response->print(WMconfig.WMssid);
+    
+    response->print(F("</strong></p>"));
+    response->print(F("</div></body></html>"));
 
-    request->send(200, "text/html", uspeh);
+    request->send(response);
 
     WM_loop = millis();
     apActive = true;
@@ -393,8 +442,8 @@ const char HTTP_SCRIPT[] PROGMEM =
   "function togglePass(i){var x=document.getElementById(i);x.type=x.type==='password'?'text':'password';}"
   "function sproziInOsvezi(){var d=document.getElementById('wifi-list-container');if(d)d.innerHTML='<div>⏳ Iskanje omrežij...</div>';fetch('/scan-async').then(()=>setTimeout(osveziSeznam,5000));}"
   "function osveziSeznam(){var d=document.getElementById('wifi-list-container');fetch('/get-networks').then(r=>r.text()).then(h=>{if(d)d.innerHTML=h;});}"
+  //"window.onload=function(){if(document.getElementById('wifi-list-container')){sproziInOsvezi();}};"
   "</script>";
-
 
 const char HTTP_STYLE[] PROGMEM = 
   "<style>"
@@ -403,7 +452,7 @@ const char HTTP_STYLE[] PROGMEM =
   ".container{width:100%;max-width:480px;}"
   ".info-card,form{background:#2d323f;box-shadow:0 10px 25px rgba(0,0,0,0.3);margin-bottom:10px;padding:10px;border-radius:12px;}"
   "h2,h3{font-size:1.2rem;}"
-  "h3{font-size:1rem;text-transform:uppercase;color:#4fd1c5;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:5px;}"
+  "h3{font-size:1rem;text-transform:uppercase;color:#4fd1c5;padding-bottom:5px;}"
   ".info-card p{font-size:0.9rem;margin-bottom:8px;color:#a0aec0;}"
   ".form-row{display:flex;align-items:center;margin-bottom:12px;}"
   "label{font-size:0.9rem;width:130px;flex-shrink:0;}"
@@ -420,143 +469,93 @@ const char HTTP_STYLE[] PROGMEM =
   ".link{background:#3f4453;color:#fff;margin:6px 0;padding:10px;display:block;border-radius:6px;text-decoration:none;font-size:0.9rem;}"
   "</style>";
 
-String SendHTML() {
-  String html = "<!DOCTYPE html><html>\n";
-  html += "<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=no\">\n";
-  html += "<title>WiFi Manager</title>\n";
-  html += FPSTR(HTTP_SCRIPT);
-  html += FPSTR(HTTP_STYLE);
+void SendHTMLStream(AsyncResponseStream *response) {
+   response->print(F("<!DOCTYPE html><html>\n<head>\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=no\">\n<title>WiFi Manager</title>\n"));
 
-  html += "<style>\n";
-  html += ".home-btn-container { margin-top: 12px; text-align: center; }\n";
-  html += ".home-link { display: block; width: 100%; box-sizing: border-box; padding: 12px; ";
-  html += "background-color: #2d3748; color: #a0aec0; text-decoration: none; ";
-  html += "font-size: 16px; font-weight: bold; border-radius: 6px; border: 1px solid #4a5568; ";
-  html += "transition: all 0.2s ease-in-out; text-transform: uppercase; letter-spacing: 0.5px; }\n";
-  html += ".home-link:hover { background-color: #4a5568; color: #fff; border-color: #718096; }\n";
-  html += "</style>\n";
+  response->print(FPSTR(HTTP_SCRIPT));
+  response->print(FPSTR(HTTP_STYLE));
+  //response->print(FPSTR(HTTP_STYLE_HOME));
 
-  html += "<meta charset=\"UTF-8\">\n";
-  html += "</head><body>\n";
-  html += "<div class=\"container\">\n";
+  response->print(F("<meta charset=\"UTF-8\">\n</head><body>\n"));
+  response->print(F("<div class=\"container\">\n"));
 
-  html += "<div class=\"info-card\">\n";
-  html += "<h2>";
-  html += getCleanBoardName();
-  html += " | RSSI: ";
-  html += String(getRSSIasQuality(WiFi.RSSI())) + " %";
-  html += "</h2></div>\n";
+  response->print(F("<div class=\"info-card\"><h2>"));
+  response->print(clean_board_name);
+  response->print(F(" | RSSI: "));
+  response->print(getRSSIasQuality(WiFi.RSSI()));
+  response->print(F(" %</h2></div>\n"));
 
-  html += "<form action=\"";
-  html += serverURL_wifi_save;
-  html += "\" method=\"POST\" autocomplete=\"off\">\n";
-  html += "<h3>WiFi Settings</h3>\n";
+  response->print(F("<form action=\""));
+  response->print(serverURL_wifi_save);
+  response->print(F("\" method=\"POST\" autocomplete=\"off\">\n<h3>WiFi</h3>\n"));
 
-  // Host Name
-  html += "<div class=\"form-row\">";
-  html += "<label for=\"host_id\">Host name*</label>";
-  html += "<div class=\"input-container\"><input id=\"host_id\" required type=\"text\" name=\"";
-  html += hostNameParam;
-  html += "\" value=\"";
-  html += device_name;
-  html += "\" maxlength=\"16\" spellcheck=\"false\"></div>";
-  html += "</div>\n";
+  response->print(F("<div class=\"form-row\"><label for=\"host_id\">Host name*</label><div class=\"input-container\"><input id=\"host_id\" required type=\"text\" name=\""));
+  response->print(hostNameParam);
+  response->print(F("\" value=\""));
+  response->print(device_name);
+  response->print(F("\" maxlength=\"16\" spellcheck=\"false\"></div></div>\n"));
 
-  // SSID
-  html += "<div class=\"form-row\">";
-  html += "<label for=\"ssid_id\">WiFi SSID</label>";
-  html += "<div class=\"input-container\"><input id=\"ssid_id\" required type=\"text\" name=\"";
-  html += ssidParam;
-  html += "\" value=\"";
-  html += ((WMconfig.WMssid.length() > 0) ? WMconfig.WMssid : hardCode_SSID);
-  html += "\" maxlength=\"32\" spellcheck=\"false\"></div>";
-  html += "</div>\n";
+  response->print(F("<div class=\"form-row\"><label for=\"ssid_id\">WiFi SSID</label><div class=\"input-container\"><input id=\"ssid_id\" required type=\"text\" name=\""));
+  response->print(ssidParam);
+  response->print(F("\" value=\""));
+  response->print((strlen(WMconfig.WMssid) > 0) ? WMconfig.WMssid : hardCode_SSID);
+  response->print(F("\" maxlength=\"32\" spellcheck=\"false\"></div></div>\n"));
 
-  // WiFi Password
-  html += "<div class=\"form-row\">";
-  html += "<label for=\"pass_id\">WiFi Passwd</label>";
-  html += "<div class=\"input-container\">";
-  html += "<input id=\"pass_id\" type=\"password\" name=\"";
-  html += passParam;
-  html += "\" value=\"";
-  html += ((WMconfig.WMpass.length() > 0) ? WMconfig.WMpass : hardCode_PASS);
-  html += "\" maxlength=\"64\">";
-  html += "<div class=\"show-pass\"><input type=\"checkbox\" id=\"show_w_p\" onclick=\"togglePass('pass_id')\"><label for=\"show_w_p\">View</label></div>";
-  html += "</div>";
-  html += "</div>\n";
+  response->print(F("<div class=\"form-row\"><label for=\"pass_id\">WiFi Passwd</label><div class=\"input-container\"><input id=\"pass_id\" type=\"password\" name=\""));
+  response->print(passParam);
+  response->print(F("\" value=\""));
+  response->print((strlen(WMconfig.WMpass) > 0) ? WMconfig.WMpass : hardCode_PASS);
+  response->print(F("\" maxlength=\"64\"><div class=\"show-pass\"><input type=\"checkbox\" id=\"show_w_p\" onclick=\"togglePass('pass_id')\"><label for=\"show_w_p\">View</label></div></div></div>\n"));
 
 #ifdef ENABLE_MQTT
-  html += "<h3 style=\"margin-top:20px; color:#ed8936;\">MQTT Settings</h3>\n";
+  response->print(F("<h3 style=\"margin-top:20px; color:#ed8936;\">MQTT</h3>\n"));
 
   // MQTT Server
-  html += "<div class=\"form-row\">";
-  html += "<label class=\"mqform\" for=\"mqs_id\">MQTT Server</label>";
-  html += "<div class=\"input-container\"><input id=\"mqs_id\" type=\"text\" name=\"";
-  html += mqqtServerParam;
-  html += "\" value=\"";
-  html += WMconfig.WMmqttServer;
-  html += "\" maxlength=\"32\" spellcheck=\"false\"></div>";
-  html += "</div>\n";
+  response->print(F("<div class=\"form-row\"><label class=\"mqform\" for=\"mqs_id\">MQTT Server</label><div class=\"input-container\"><input id=\"mqs_id\" type=\"text\" name=\""));
+  response->print(mqqtServerParam);
+  response->print(F("\" value=\""));
+  response->print(WMconfig.WMmqttServer);
+  response->print(F("\" maxlength=\"32\" spellcheck=\"false\"></div></div>\n"));
 
   // MQTT Port
-  html += "<div class=\"form-row\">";
-  html += "<label class=\"mqform\" for=\"mqpo_id\">MQTT Port</label>";
-  html += "<div class=\"input-container\"><input id=\"mqpo_id\" type=\"number\" name=\"";
-  html += mqqtPortParam;
-  html += "\" value=\"";
-  html += String(WMconfig.WMmqttPort);
-  html += "\" maxlength=\"6\"></div>";
-  html += "</div>\n";
+  response->print(F("<div class=\"form-row\"><label class=\"mqform\" for=\"mqpo_id\">MQTT Port</label><div class=\"input-container\"><input id=\"mqpo_id\" type=\"number\" name=\""));
+  response->print(mqqtPortParam);
+  response->print(F("\" value=\""));
+  response->print(WMconfig.WMmqttPort);
+  response->print(F("\" maxlength=\"6\"></div></div>\n"));
 
   // MQTT User
-  html += "<div class=\"form-row\">";
-  html += "<label class=\"mqform\" for=\"mqu_id\">MQTT User</label>";
-  html += "<div class=\"input-container\"><input id=\"mqu_id\" type=\"text\" name=\"";
-  html += mqqtUserParam;
-  html += "\" value=\"";
-  html += WMconfig.WMmqttUser;
-  html += "\" maxlength=\"32\" spellcheck=\"false\"></div>";
-  html += "</div>\n";
+  response->print(F("<div class=\"form-row\"><label class=\"mqform\" for=\"mqu_id\">MQTT User</label><div class=\"input-container\"><input id=\"mqu_id\" type=\"text\" name=\""));
+  response->print(mqqtUserParam);
+  response->print(F("\" value=\""));
+  response->print(WMconfig.WMmqttUser);
+  response->print(F("\" maxlength=\"32\" spellcheck=\"false\"></div></div>\n"));
 
   // MQTT Password
-  html += "<div class=\"form-row\">";
-  html += "<label class=\"mqform\" for=\"mqpw_id\">MQTT Passwd</label>";
-  html += "<div class=\"input-container\">";
-  html += "<input id=\"mqpw_id\" type=\"password\" name=\"";
-  html += mqqtPasswdParam;
-  html += "\" value=\"";
-  html += WMconfig.WMmqttPass;
-  html += "\" maxlength=\"64\">";
-  html += "<div class=\"show-pass\"><input type=\"checkbox\" id=\"show_m_p\" onclick=\"togglePass('mqpw_id')\"><label for=\"show_m_p\">Show</label></div>";
-  html += "</div>";
-  html += "</div>\n";
+  response->print(F("<div class=\"form-row\"><label class=\"mqform\" for=\"mqpw_id\">MQTT Passwd</label><div class=\"input-container\"><input id=\"mqpw_id\" type=\"password\" name=\""));
+  response->print(mqqtPasswdParam);
+  response->print(F("\" value=\""));
+  response->print(WMconfig.WMmqttPass);
+  response->print(F("\" maxlength=\"64\"><div class=\"show-pass\"><input type=\"checkbox\" id=\"show_m_p\" onclick=\"togglePass('mqpw_id')\"><label for=\"show_m_p\">Show</label></div></div></div>\n"));
 #endif
 
-  // Gumb SAVE
-  html += "<div style=\"margin-top:20px;\"><input type=\"submit\" value=\"SAVE\" accesskey=\"s\"></div>\n";
+  // SAVE
+  response->print(F("<div style=\"margin-top:20px;\"><input type=\"submit\" value=\"SAVE\" accesskey=\"s\"></div>\n"));
 
-  // Gumb HOME
-  //html += "<div class=\"home-btn-container\"><a href=\"/ap-close\" class=\"home-link\">HOME</a></div>\n";
-  //html += "<div class=\"home-btn-container\">Manual type "+ localIPURL + " in browser </div>\n";
-
-  if (apActive == false) { html += "<div class=\"msg\">⚠️ Manual restart required for MQTT changes.</div>\n"; }
-
-  html += "</form>\n";
-
-  if (apActive == true) {
-    html += "<form class=\"scan-form\">\n";
-    html += "<h3 style=\"color:#4aa3df;\">WiFi in range</h3>\n";
-
-    html += "<div id=\"wifi-list-container\">";
-    html += "</div>\n";
-
-    html += "<a href=\"#\" class=\"scan-btn\" onclick=\"osveziSeznam(); return false;\">Refresh</a></div>\n";
-    html += "</form>\n";
+  if (apActive == false) { 
+    response->print(F("<div class=\"msg\">⚠️ Manual restart required for MQTT changes.</div>\n")); 
   }
 
-  html += "</div>\n";
-  html += "</body></html>\n";
-  return html;
+  response->print(F("</form>\n"));
+
+  if (apActive == true) {
+    response->print(F("<form class=\"scan-form\">\n<h3 style=\"color:#4aa3df;\">WiFi in range</h3>\n"));
+    response->print(F("<div id=\"wifi-list-container\"><div style=\"color:#a0aec0; font-size:0.9rem; text-align:center; padding:10px;\">Pritisnite REFRESH za iskanje omrežij.</div></div>\n"));
+    response->print(F("<a href=\"#\" class=\"scan-btn\" onclick=\"sproziInOsvezi(); return false;\">Refresh</a>\n"));
+    response->print(F("</form>\n"));
+  }
+
+  response->print(F("</div></div>\n</body></html>\n"));
 }
 
 
@@ -579,34 +578,36 @@ void write_Wifi_to_FS(const char *path) {
     esp_reboot = true;
   } else if (apActive == false) {
     manual_reboot_req = true;
-    notifyClients(notify_evt, ESPinfo());
+    notifyClients(notify_evt, ESPinfo().c_str());
   }
   //readWifi_FS();
 }
 
-
 String parseWifi() {
   JsonDocument jsonBuffer;
-  JsonObject root = jsonBuffer.to<JsonObject>();
+  JsonObject root         = jsonBuffer.to<JsonObject>();
 
-  root[hostNameParam] = WMconfig.WMhostName;
-  root[ssidParam] = WMconfig.WMssid;
-  root[passParam] = WMconfig.WMpass;
+  root[hostNameParam]     = WMconfig.WMhostName;
+  root[ssidParam]         = WMconfig.WMssid;
+  root[passParam]         = WMconfig.WMpass;
 
   #ifdef ENABLE_MQTT
     root[mqqtServerParam] = WMconfig.WMmqttServer;
-    root[mqqtPortParam] = WMconfig.WMmqttPort;
-    root[mqqtUserParam] = WMconfig.WMmqttUser;
+    root[mqqtPortParam]   = WMconfig.WMmqttPort;
+    root[mqqtUserParam]   = WMconfig.WMmqttUser;
     root[mqqtPasswdParam] = WMconfig.WMmqttPass;
   #endif
 
   String output = "";
+  output.reserve(512);
+  
   serializeJson(jsonBuffer, output);
 
-  DEBUG_PRINTLN(output);
+  DEBUG_PRINTLN(output.c_str());
 
   return output;
 }
+
 
 
 bool read_Wifi_from_FS() {
@@ -629,22 +630,22 @@ bool read_Wifi_from_FS() {
           device_name[sizeof(device_name) - 1] = '\0';
         }
 
-        device_name_c = device_name;
-        WMconfig.WMhostName = device_name;
+        WMconfig.WMhostName     = device_name;
 
-        WMconfig.WMssid = json[ssidParam].as<String>();
-        WMconfig.WMpass = json[passParam].as<String>();
+        snprintf(WMconfig.WMssid, sizeof(WMconfig.WMssid), "%s", json[ssidParam].as<const char*>());
+        snprintf(WMconfig.WMpass, sizeof(WMconfig.WMpass), "%s", json[passParam].as<const char*>());
 
         #ifdef ENABLE_MQTT
-          WMconfig.WMmqttServer = json[mqqtServerParam].as<String>();
-          WMconfig.WMmqttPort   = json[mqqtPortParam].as<uint16_t>();
-          WMconfig.WMmqttUser   = json[mqqtUserParam].as<String>();
-          WMconfig.WMmqttPass   = json[mqqtPasswdParam].as<String>();
+          snprintf(WMconfig.WMmqttServer, sizeof(WMconfig.WMmqttServer), "%s", json[mqqtServerParam].as<const char*>());
+          WMconfig.WMmqttPort   = json[mqqtPortParam].as<uint16_t>(); // Številke lahko ostanejo z '='
+          snprintf(WMconfig.WMmqttUser, sizeof(WMconfig.WMmqttUser), "%s", json[mqqtUserParam].as<const char*>());
+          snprintf(WMconfig.WMmqttPass, sizeof(WMconfig.WMmqttPass), "%s", json[mqqtPasswdParam].as<const char*>());
         #endif
+
 
         return true;
       } else {
-        DEBUG_PRINTLN("Failed to load WManager json config due to parsing error.");
+        DEBUG_PRINTLN("Failed to load WManager json config, parsing error.");
         apActive = true;
       }
     } else {
@@ -658,16 +659,17 @@ bool read_Wifi_from_FS() {
 
 const char HTTP_ITEM[] PROGMEM = "<div><a href='#p' class='link' onclick='c(this)'><span>{n}</span><span style='float:right; color:#3cb371;'>{s}</span><div style='clear:both;'></div></a></div>";
 
-String scanWifi_SSID() {
-  int n = WiFi.scanComplete();
-  String output = "";
 
-  if (n <= 0) return "<div>No Wi-Fi in range.</div>";
+void scanWifi_SSID(AsyncResponseStream *response, int n) {
+  if (n <= 0) {
+    response->print(F("<div>No Wi-Fi in range.</div>"));
+    return;
+  }
 
   int indices[n];
   for (int i = 0; i < n; i++) indices[i] = i;
 
-  // Sort (RSSI)
+  // Sortiranje po RSSI
   for (int i = 0; i < n; i++) {
     for (int j = i + 1; j < n; j++) {
       if (WiFi.RSSI(indices[j]) > WiFi.RSSI(indices[i])) {
@@ -676,11 +678,10 @@ String scanWifi_SSID() {
     }
   }
 
-  // Filter duplicates
-  String cssid;
+  // Filtriranje duplikatov
   for (int i = 0; i < n; i++) {
     if (indices[i] == -1) continue;
-    cssid = WiFi.SSID(indices[i]);
+    String cssid = WiFi.SSID(indices[i]);
     for (int j = i + 1; j < n; j++) {
       if (cssid == WiFi.SSID(indices[j])) {
         indices[j] = -1;
@@ -688,30 +689,18 @@ String scanWifi_SSID() {
     }
   }
 
-  String HTTP_ITEM_STR = FPSTR(HTTP_ITEM);
-
   for (int i = 0; i < n; i++) {
     if (indices[i] == -1) continue;
     if (WiFi.SSID(indices[i]).length() == 0) continue;
 
-    String item = HTTP_ITEM_STR;
-    String ss_id = WiFi.SSID(indices[i]);
     int32_t rssi = WiFi.RSSI(indices[i]);
-
     int quality = (rssi <= -100) ? 0 : (rssi >= -50) ? 100 : 2 * (rssi + 100);
-    String qll = String(quality) + "%";
-    /*
-      String signalIcon = "";
-      if (quality > 80)       signalIcon = "||||  " + String(quality) + "%";
-      else if (quality > 60)  signalIcon = "|||   " + String(quality) + "%";
-      else if (quality > 40)  signalIcon = "||    " + String(quality) + "%";
-      else                    signalIcon = "|     " + String(quality) + "%";
-    */
-    item.replace("{n}", ss_id);
-    item.replace("{s}", qll);
-    //item.replace("{s}", signalIcon);
-    output += item;
-  }
 
-  return output;
+    response->print(F("<a href='#' class='link' onclick='c(this); return false;'>📶 <span>"));
+    response->print(WiFi.SSID(indices[i]));
+    response->print(F("</span> ("));
+    response->print(quality);
+    response->print(F("%)</a>\n"));
+  }
 }
+

@@ -1,4 +1,4 @@
-void ESPinfo(String &output) {
+void ESPinfo(Print &output) {
   JsonDocument doc;
 
   JsonObject info = doc[F("info")].to<JsonObject>();
@@ -7,7 +7,7 @@ void ESPinfo(String &output) {
   info[F("chp_id")]       = chipID_str;
   info[F("ip")]           = WiFi.localIP().toString();
   info[F("mac")]          = WiFi.macAddress();
-  info[F("brd")]          = getCleanBoardName();
+  info[F("brd")]          = clean_board_name;
   info[F("fw")]           = FIRMWARE_VERSION;
   info[F("modul")]        = MODULE_TYPE(conf_type);
   info[F("sub_modul")]    = MODULE_sub_TYPE(conf_sub_type);
@@ -23,9 +23,9 @@ void ESPinfo(String &output) {
   info[F("mrbt")]         = manual_reboot_req;
 
   #if defined(ESP8266)
-    info[F("heap_frag")]  = ESP.getHeapFragmentation();
-    info[F("SDK")]        = system_get_sdk_version();
-    info[F("rst")]        = ESP.getResetReason();
+    info[F("heap_frag")]      = ESP.getHeapFragmentation();
+    info[F("SDK")]            = system_get_sdk_version();
+    info[F("rst")]            = ESP.getResetReason();
   #elif defined(ESP32)
     info[F("chiprev")]        = ESP.getChipRevision();
     info[F("chipmodel")]      = ESP.getChipModel();
@@ -45,43 +45,46 @@ void ESPinfo(String &output) {
   #endif
 
   JsonObject clientinfo = doc[F("clients")].to<JsonObject>();
-  clientinfo[F("HTTP")]      = HTTP_client;
-  clientinfo[F("LOGIN")]     = LOGIN_client;
-  clientinfo[F("LOGOUT")]    = LOGOUT_client;
-  clientinfo[F("WS")]        = WS_client;
-  clientinfo[F("BRD")]       = Settings_client;
-  clientinfo[F("notfound")]  = NotFound_client;
-  clientinfo[F("Wifi_edit")] = wifi_edit_client;
-  clientinfo[F("loged_out")] = client_loged_out;
+  clientinfo[F("HTTP")]       = HTTP_client;
+  clientinfo[F("LOGIN")]      = LOGIN_client;
+  clientinfo[F("LOGOUT")]     = LOGOUT_client;
+  clientinfo[F("WS")]         = WS_client;
+  clientinfo[F("BRD")]        = Settings_client;
+  clientinfo[F("notfound")]   = NotFound_client;
+  clientinfo[F("Wifi_edit")]  = wifi_edit_client;
+  clientinfo[F("loged_out")]  = client_loged_out;
 
   JsonObject conn = doc[F("conn")].to<JsonObject>();
-  conn[F("HTTP")]            = WIFI_connected;
-  conn[F("MQTT")]            = MQTT_connected;
-  conn[F("MDNS")]            = MDNS_connected;
+  conn[F("HTTP")]             = WIFI_connected;
+  conn[F("MQTT")]             = MQTT_connected;
+  conn[F("MDNS")]             = MDNS_connected;
 
   JsonObject udp = doc[F("udp")].to<JsonObject>();
-  udp[F("conn")]             = UDP_connected;
-  udp[F("port")]             = udpPort;
-  udp[F("mode")]             = Udp_mode_str;
+  udp[F("conn")]              = UDP_connected;
+  udp[F("port")]              = udpPort;
+  udp[F("mode")]              = Udp_mode_str;
 
   JsonObject services = doc[F("services")].to<JsonObject>();
-  services[F("HTTP")]        = HTTP_enabled;
-  services[F("WS")]          = WS_enabled;
-  services[F("MDNS")]        = MDNS_enabled;
-  services[F("OTA")]         = OTA_enabled;
+  services[F("HTTP")]         = HTTP_enabled;
+  services[F("WS")]           = WS_enabled;
+  services[F("MDNS")]         = MDNS_enabled;
+  services[F("OTA")]          = OTA_enabled;
 
   JsonObject modulez = doc[F("modules")].to<JsonObject>();
-  modulez[F("I2C")]          = MODULE_I2C;
-  modulez[F("SPI")]          = MODULE_SPI;
-  modulez[F("Display")]      = MODULE_Display;
-  modulez[F("OneWire")]      = MODULE_OneWire;
+  modulez[F("I2C")]           = MODULE_I2C;
+  modulez[F("SPI")]           = MODULE_SPI;
+  modulez[F("Display")]       = MODULE_Display;
+  modulez[F("OneWire")]       = MODULE_OneWire;
 
   serializeJson(doc, output);
 }
 
 String ESPinfo() {
   String jsonResponse;
-  jsonResponse.reserve(1024);
-  ESPinfo(jsonResponse);
+  jsonResponse.reserve(2048);
+  StreamString streamStr;
+  ESPinfo(streamStr);
+  
+  jsonResponse = streamStr.c_str();
   return jsonResponse;
 }

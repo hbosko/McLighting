@@ -30,10 +30,9 @@ void palette_json(Print& output) {
     paletteObj["name"] = nameBuffer;
   }
 
-  //String output;
   serializeJson(doc, output);
 
   #ifdef DEBUG
-  Serial.println(F("JSON seznam palet uspešno poslan na Web UI."));
+  Serial.println(F("JSON seznam palet poslan na Web."));
   #endif
 }

@@ -1,23 +1,7 @@
 bool esp_reboot = false;
 
-// https://stackoverflow.com/questions/9072320/split-string-into-string-array
-String getValue(String data, char separator, int index) {
-  int found = 0;
-  int strIndex[] = { 0, -1 };
-  int maxIndex = data.length() - 1;
-
-  for (int i = 0; i <= maxIndex && found <= index; i++) {
-    if (data.charAt(i) == separator || i == maxIndex) {
-      found++;
-      strIndex[0] = strIndex[1] + 1;
-      strIndex[1] = (i == maxIndex) ? i + 1 : i;
-    }
-  }
-  return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
-}
-
 #if defined(ESP32)
-  String getResetReason_esp32() {
+  const char* getResetReason_esp32() {
     esp_reset_reason_t reason = esp_reset_reason();
     
     switch (reason) {
@@ -76,8 +60,8 @@ const char * FlashChipMode(FlashMode_t ideMode) {
 #endif
 
 template <size_t N>
-String toCleanString(const std::array<char, N>& arr) {
-  return String(arr.data());
+const char* toCleanString(const std::array<char, N>& arr) {
+  return arr.data();
 }
 
 // --ByteToKbyteToMbytE-------
@@ -172,7 +156,6 @@ const char* Wifi_status(wl_status_t wifistatus) {
     case WL_NO_SHIELD:       return "No shield";
     case WL_IDLE_STATUS:     return "Idle status";
     case WL_NO_SSID_AVAIL:   return "No SSID avail";
-    // case WL_SCAN_COMPLETED: return "Scan completed"; // OSTRANJENO - Ne obstaja v wl_status_t
     case WL_CONNECTED:       return "Povezan";
     case WL_CONNECT_FAILED:  return "Failed";
     case WL_CONNECTION_LOST: return "Connection lost";
@@ -209,9 +192,16 @@ void removeDir(const char* path) {
   #endif
 }
 
-String getCleanBoardName() {
-    String b = ARDUINO_BOARD;
-    b.replace("_GENERIC", "");
-    b.trim();
-    return b;
+char clean_board_name[32] = "";
+
+void initCleanBoardName() {
+  String b = ARDUINO_BOARD;
+  b.reserve(40);
+  
+  b.replace("_GENERIC", "");
+  b.trim();
+  
+  snprintf(clean_board_name, sizeof(clean_board_name), "%s", b.c_str());
 }
+
+

@@ -1,6 +1,6 @@
 #include "palette_editor_HTML.h"
 
-uint8_t paletteIdx = 0;
+uint8_t paletteIdx = 3;
 bool isCustomPaletteActive = false;
 
 #define MAX_CUSTOM_PALETTES 20

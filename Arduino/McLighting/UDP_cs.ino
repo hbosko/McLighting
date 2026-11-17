@@ -1,4 +1,3 @@
-
 #ifdef ENABLE_UDP
 
   //todo: autoscan if master or slave.. with same "BoardType"!, now works only if you scan from website...
@@ -48,8 +47,8 @@
     char pingMsg[64];
     snprintf(pingMsg, sizeof(pingMsg), "PING|%s", MODULE_TYPE(conf_type));
 
-      DEBUG_PRINT("discover Same Modules pingMsg: ");
-      DEBUG_PRINTLN(pingMsg);
+    DEBUG_PRINT("discover Same Modules pingMsg: ");
+    DEBUG_PRINTLN(pingMsg);
 
     udp.beginPacket(IPAddress(255, 255, 255, 255), udpPort);
     udp.write((const uint8_t*)pingMsg, strlen(pingMsg));
@@ -66,14 +65,14 @@
       udp.read(udpBuffer, packetSize);
       udpBuffer[packetSize] = '\0';
 
-        DEBUG_PRINT("udpBuffer: ");
-        DEBUG_PRINTLN(udpBuffer);
+      DEBUG_PRINT("udpBuffer: ");
+      DEBUG_PRINTLN(udpBuffer);
 
       if (strncmp(udpBuffer, "PING|", 5) == 0) {
         char* searchedType = udpBuffer + 5;
 
-            DEBUG_PRINT("pongMsg searched Type: ");
-            DEBUG_PRINTLN(searchedType);
+        DEBUG_PRINT("pongMsg searched Type: ");
+        DEBUG_PRINTLN(searchedType);
             
         if (strcmp(searchedType, MODULE_TYPE(conf_type)) == 0) {
           char pongMsg[96];
@@ -90,14 +89,10 @@
           udp.endPacket();
         }
         return;
-
       }
 
       if (strncmp(udpBuffer, "PONG|", 5) == 0) {
-        String ipStr = udp.remoteIP().toString();
-        const char* receivedData = udpBuffer + 5;
-        
-        addDeviceToList(ipStr.c_str(), receivedData); 
+        addDeviceToList(udp.remoteIP().toString().c_str(), udpBuffer + 5); 
         return; 
       }
 
@@ -116,8 +111,8 @@
           WS2812FXStripSettings.udpMaster = false; 
 
           CheckPayload(actualPayload, strlen(actualPayload));
-            DEBUG_PRINT("actual Payload: ");
-            DEBUG_PRINTLN(actualPayload);
+          DEBUG_PRINT("actual Payload: ");
+          DEBUG_PRINTLN(actualPayload);
 
           WS2812FXStripSettings.udpMaster = backupMaster;
         }
@@ -149,8 +144,6 @@
         
         IPAddress targetIP;
         if (WiFi.hostByName(discoveredDevices[i].ip, targetIP) == 1) {
-
-          
           udp.beginPacket(targetIP, udpPort);
           udp.write((const uint8_t*)syncPayload, strlen(syncPayload));
           udp.endPacket();
@@ -180,7 +173,6 @@
       }
     });
 
-    //  server.on(serverURL_get_UDP, HTTP_GET, [](AsyncWebServerRequest * request) {
     server.on("/udp/get", HTTP_GET, [](AsyncWebServerRequest* request) {
       const char* modeString = "standalone";
       if (WS2812FXStripSettings.udpMaster) {
@@ -195,18 +187,15 @@
     });
 
 
-    //server.on(serverURL_set_UDP, HTTP_ANY, [](AsyncWebServerRequest* request) {
     server.on("/udp/set", HTTP_ANY, [](AsyncWebServerRequest* request) {
       if (request->hasParam("master", true) || request->hasParam("master", false)) {
         AsyncWebParameter* p = request->getParam("master", request->hasParam("master", true));
-        String val = p->value();
-        WS2812FXStripSettings.udpMaster = (val == "1" || val == "true");
+        WS2812FXStripSettings.udpMaster = (p->value() == "1" || p->value() == "true");
       }
 
       if (request->hasParam("slave", true) || request->hasParam("slave", false)) {
         AsyncWebParameter* p = request->getParam("slave", request->hasParam("slave", true));
-        String val = p->value();
-        WS2812FXStripSettings.udpReciever = (val == "1" || val == "true");
+        WS2812FXStripSettings.udpReciever = (p->value() == "1" || p->value() == "true");
       }
 
       #ifdef DEBUG
@@ -214,52 +203,65 @@
         WS2812FXStripSettings.udpMaster, WS2812FXStripSettings.udpReciever);
       #endif
 
-        UDP_mode_json();
-
+      UDP_mode_json();
+      
       save_strip_config_ticker.detach();
       save_strip_config_ticker.once(3, Trigger_Save_Config);
 
       request->send(200, "text/plain", "OK");
     });
 
-    //server.on(serverURL_UDP_discover, HTTP_GET, [](AsyncWebServerRequest* request) {
     server.on("/udp/discover", HTTP_GET, [](AsyncWebServerRequest* request) {
       discoveredDeviceCount = 0;
       discoverSameModules();
       request->send(200, "text/plain", "Searching started...");
     });
 
-    //server.on(serverURL_UDP_list, HTTP_GET, [](AsyncWebServerRequest* request) {
-    server.on("/udp/list", HTTP_GET, [](AsyncWebServerRequest* request) {
-      JsonDocument doc;
-      JsonArray arr = doc.to<JsonArray>();
+  server.on("/udp/list", HTTP_GET, [](AsyncWebServerRequest* request) {
+    JsonDocument doc;
+    JsonArray arr = doc.to<JsonArray>();
 
-      for (int i = 0; i < discoveredDeviceCount; i++) {
-        JsonObject obj = arr.add<JsonObject>();
-        obj["ip"] = discoveredDevices[i].ip;
+    for (int i = 0; i < discoveredDeviceCount; i++) {
+      JsonObject obj = arr.add<JsonObject>();
+      obj["ip"] = discoveredDevices[i].ip;
+      
+      const char* lastPipe = strrchr(discoveredDevices[i].type, '|');
+      bool formatValid = false;
+      
+      if (lastPipe != nullptr) {
+        const char* modePtr = lastPipe + 1;
         
-        String fullType = String(discoveredDevices[i].type);
-        int lastPipe = fullType.lastIndexOf('|');
-        
-        if (lastPipe != -1 && (fullType.endsWith("master") || fullType.endsWith("slave") || fullType.endsWith("standalone"))) {
-          obj["type"] = fullType.substring(0, lastPipe);
-          obj["mode"] = fullType.substring(lastPipe + 1);
-        } else {
-          obj["type"] = fullType;
-          obj["mode"] = "unknown";
+        if (strcmp(modePtr, "master") == 0 || 
+            strcmp(modePtr, "slave") == 0 || 
+            strcmp(modePtr, "standalone") == 0) {
+          
+          obj["mode"] = modePtr;
+          
+          size_t typeLen = lastPipe - discoveredDevices[i].type;
+          char typeBuf[64];
+          if (typeLen > 63) typeLen = 63;
+          strncpy(typeBuf, discoveredDevices[i].type, typeLen);
+          typeBuf[typeLen] = '\0';
+          
+          obj["type"] = typeBuf;
+          formatValid = true;
         }
       }
-
-      AsyncResponseStream* response = request->beginResponseStream("application/json");
-      if (discoveredDeviceCount == 0) {
-        response->print("[]");
-      } else {
-        serializeJson(doc, *response);
+      
+      if (!formatValid) {
+        obj["type"] = discoveredDevices[i].type;
+        obj["mode"] = "unknown";
       }
-      request->send(response);
-    });
+    }
 
+    AsyncResponseStream* response = request->beginResponseStream("application/json");
+    if (discoveredDeviceCount == 0) {
+      response->print("[]");
+    } else {
+      serializeJson(doc, *response);
+    }
+    request->send(response);
+  });
 
-  }
-
+}
 #endif
