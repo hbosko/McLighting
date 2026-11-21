@@ -166,6 +166,8 @@ void connectToWifi() {
     (void)event;
     WIFI_connected = 0;
     DEBUG_PRINTLN("Disconnected from Wi-Fi (ESP8266).");
+    DEBUG_PRINT("IP address: ");
+    DEBUG_PRINTLN(WiFi.localIP());
   }
 
 #elif defined(ESP32)
