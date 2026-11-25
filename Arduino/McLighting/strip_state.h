@@ -7,7 +7,7 @@ struct {
   int brt          = brightness;            // brightness
   int spd          = ws2812fx_speed;        // ws2812fx_speed
   int p_idx        = paletteIdx;            // paletteIdx
-  bool isCustomPal = true;                 // "costom or builtIn"
+  bool isCustomPal = false;                 // "costom or builtIn"
 } WS2812FXStripState;
 
 //#define ws2812fx_mode WS2812FXStripState.mode
@@ -34,11 +34,17 @@ bool write_strip_state_FS(){
   updateFS_strip_state = true;
   DEBUG_PRINTLN("Saving strip state FS ");
 
+  WS2812FXStripState.mode        = strip ? (int)strip->getMode() : ws2812fx_mode;
+  WS2812FXStripState.brt         = strip ? (int)strip->getBrightness() : brightness;
+  WS2812FXStripState.spd         = ws2812fx_speed;
+  WS2812FXStripState.p_idx       = paletteIdx;
+  WS2812FXStripState.isCustomPal = isCustomPaletteActive;
+
   JsonDocument jsonBuffer;
   JsonObject json = jsonBuffer.to<JsonObject>();
 
-  json[F("mode")]     = strip ? (int) strip->getMode() : WS2812FXStripState.mode;
-  json[F("brt")]      = strip ? (int) strip->getBrightness() : WS2812FXStripState.brt;
+  json[F("mode")]     = WS2812FXStripState.mode;
+  json[F("brt")]      = WS2812FXStripState.brt;
   json[F("spd")]      = WS2812FXStripState.spd;
   json[F("r")]        = main_color.red;
   json[F("g")]        = main_color.green;
@@ -56,7 +62,7 @@ bool write_strip_state_FS(){
     if (WS2812FXStripState.p_idx >= 0 && WS2812FXStripState.p_idx < BUILTIN_PALETTE_COUNT) {
       char nameBuffer[32];
       strcpy_P(nameBuffer, (char*)pgm_read_ptr(&(BuiltInPalettesNames[WS2812FXStripState.p_idx])));
-      json[F("p_nm")] = nameBuffer;
+      json[F("p_nm")] = String(nameBuffer);
     } else {
       json[F("p_nm")] = F("Unknown");
     }
@@ -72,12 +78,16 @@ bool write_strip_state_FS(){
   serializeJson(json, configFile);
   configFile.close();
   updateFS_strip_state = false;
+
+  isCustomPaletteActive = true; 
   
   if (!apActive) {
     ws.textAll("Strip Saved!"); 
   }
   return true;
 }
+
+
 
 
 bool read_strip_state_FS() {
@@ -94,81 +104,48 @@ bool read_strip_state_FS() {
       if (!error) {
         DEBUG_PRINTLN("stripstate_path Parsed!");
 
-        WS2812FXStripState.mode     = json_load_stripstate[F("mode")].as<int>();
-        WS2812FXStripState.brt      = json_load_stripstate[F("brt")].as<int>();
-        WS2812FXStripState.spd      = json_load_stripstate[F("spd")].as<int>();
-        WS2812FXStripState.p_idx    = json_load_stripstate[F("p_idx")].as<int>();
+        WS2812FXStripState.mode       = json_load_stripstate[F("mode")].as<int>();
+        WS2812FXStripState.brt        = json_load_stripstate[F("brt")].as<int>();
+        WS2812FXStripState.spd        = json_load_stripstate[F("spd")].as<int>();
+        WS2812FXStripState.p_idx      = json_load_stripstate[F("p_idx")].as<int>();
         
-        main_color.red              = json_load_stripstate[F("r")].as<int>();
-        main_color.green            = json_load_stripstate[F("g")].as<int>();
-        main_color.blue             = json_load_stripstate[F("b")].as<int>();
+        main_color.red                = json_load_stripstate[F("r")].as<int>();
+        main_color.green              = json_load_stripstate[F("g")].as<int>();
+        main_color.blue               = json_load_stripstate[F("b")].as<int>();
         
         String palType                 = json_load_stripstate[F("p_typ")] | "b";
         WS2812FXStripState.isCustomPal = (palType == "c");
 
-        paletteIdx            = WS2812FXStripState.p_idx;
-        ws2812fx_mode         = WS2812FXStripState.mode;
-        brightness            = WS2812FXStripState.brt;
-        ws2812fx_speed        = WS2812FXStripState.spd;
+        paletteIdx                    = WS2812FXStripState.p_idx;
+        ws2812fx_mode                 = WS2812FXStripState.mode;
+        brightness                    = WS2812FXStripState.brt;
+        ws2812fx_speed                = WS2812FXStripState.spd;
         
-        isCustomPaletteActive = WS2812FXStripState.isCustomPal; 
-
-        if (strip) {
-          strip->stop();
-          strip->strip_off();
-
-          strip->setMode(WS2812FXStripState.mode);
-          strip->setSpeed(convertSpeed(WS2812FXStripState.spd));
-          strip->setBrightness(WS2812FXStripState.brt);
-          
-          strip->setColor(main_color.red, main_color.green, main_color.blue);
-
-          WS2812FX::Segment* seg = strip->getSegment(0);
-          if (seg != nullptr) {
-            if (WS2812FXStripState.isCustomPal) {
-              // Uporabniške (c) palete
-              seg->colors[0] = getCustomPaletteColor(WS2812FXStripState.p_idx, 0);
-              seg->colors[1] = getCustomPaletteColor(WS2812FXStripState.p_idx, 1);
-              seg->colors[2] = getCustomPaletteColor(WS2812FXStripState.p_idx, 2);
-            } else {
-              // Vgrajene (p) palete
-               if (WS2812FXStripState.p_idx >= 0 && WS2812FXStripState.p_idx < BUILTIN_PALETTE_COUNT) {
-                seg->colors[0] = pgm_read_dword(&(BuiltInPalettes[WS2812FXStripState.p_idx][0]));
-                seg->colors[1] = pgm_read_dword(&(BuiltInPalettes[WS2812FXStripState.p_idx][1]));
-                seg->colors[2] = pgm_read_dword(&(BuiltInPalettes[WS2812FXStripState.p_idx][2]));
-                
-              }
-            }
+        if (paletteIdx > 0) {
+            isCustomPaletteActive = true;
+          } else {
+            isCustomPaletteActive = false;
           }
 
-          //strip->trigger();
-          strip->start();
-          strip->show();
+          if (strip) {
+            strip->setMode(WS2812FXStripState.mode);
+            strip->setSpeed(convertSpeed(WS2812FXStripState.spd));
+            strip->setBrightness(WS2812FXStripState.brt);
+            strip->setColor(main_color.red, main_color.green, main_color.blue);
+            
+            strip->trigger();
 
-        }
+            Mode = SETCOLOR; 
+          }
 
-          DEBUG_PRINT("---isCustomPaletteActive: "); 
-          DEBUG_PRINTLN(isCustomPaletteActive);
-          DEBUG_PRINT("---paletteIdx: "); 
-          DEBUG_PRINTLN(paletteIdx); 
-          DEBUG_PRINT("---ws2812fx_mode: "); 
-          DEBUG_PRINTLN(ws2812fx_mode); 
-          DEBUG_PRINT("---WS2812FXStripState.mode: "); 
-          DEBUG_PRINTLN(WS2812FXStripState.mode); 
-
-
-        configFile.close();
-        updateFS_strip_state = false;
-        return true;
+          configFile.close();
+          updateFS_strip_state = false;
+          return true;
       } else {
         DEBUG_PRINTLN("Failed to load stripstate_path json config!");
         configFile.close();
       }
-    } else {
-      DEBUG_PRINTLN("Failed to open /stripstate_path.json");
     }
-  } else {
-    DEBUG_PRINTLN("Could not find stripstate_path.json");
   }
   updateFS_strip_state = false;
   return false;

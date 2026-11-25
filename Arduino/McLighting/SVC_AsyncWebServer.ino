@@ -2,7 +2,6 @@
 
 #include "notFound_HTML.h"
 #include "brd_settings_HTML.h"
-#include "esp_Control_panel_HTML.h"
 
 void custom_webserver_path(){
   #ifdef ENABLE_UDP
@@ -30,7 +29,7 @@ void custom_webserver_path(){
     server_builtin_palettes();
     handler_save_palettes();
 
-  /* // websockets faster, this stable... 
+  /* // websockets faster, this stable... someday... 
   // TODO: if AP mode, dont use WS... will fill buffer.
 
     server.on("/set_brightness", HTTP_GET, [](AsyncWebServerRequest * request) {
@@ -219,15 +218,6 @@ void init_WEB_server(){
     request->send(response);
   });
 
-  server.on(serverURL_ESP_CP, HTTP_ANY, [](AsyncWebServerRequest * request) {
-    /*
-    if (!request->authenticate(login_username, login_password)) {
-      return request->requestAuthentication();
-    }*/
-    AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", esp_cp_html_gz, esp_cp_html_gz_len);
-    response->addHeader("Content-Encoding", "gzip");
-    request->send(response);
-  });
 
     // board settings
   server.on(serverURL_BRD_sett_json, HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -299,9 +289,9 @@ void init_WEB_server(){
 void WIFIMANAGER_server_path(){
 
   server.on(serverURL_edit_ap, HTTP_ANY, [](AsyncWebServerRequest *request) {
-      if (request->client() != nullptr) {
-        snprintf(wifi_edit_client, sizeof(wifi_edit_client), "%s", request->client()->remoteIP().toString().c_str());
-      }
+    if (request->client() != nullptr) {
+      snprintf(wifi_edit_client, sizeof(wifi_edit_client), "%s", request->client()->remoteIP().toString().c_str());
+    }
 
     AsyncResponseStream *response = request->beginResponseStream("text/html");
       response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");

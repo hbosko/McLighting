@@ -1,5 +1,5 @@
 // disable DEGUG on live product!!
-#define ENABLE_DEBUG_service 1
+#define ENABLE_DEBUG_service 0
 
 #define ENABLE_webSockets_service 1
 #define ENABLE_MQTT_service 1
@@ -22,16 +22,16 @@
   #include "index_HTML.h"
 #endif
 
-#include "0_define.h"
-#include "0_ESP_settings.h"
-#include "1_library.h"
+#include "define.h"
+#include "ESP_settings.h"
+#include "library.h"
 #include "prototype.h"
 #ifdef ENABLE_UDP
   #include "UDP_indexHTML.h"
   #include "UDP_cs.h"
 #endif
 #include "enum_stuff.h"
-#include "0_helpers.h"
+#include "helpers.h"
 #include "SVC_FS_editor.h"
 #include "SVC_MQTT.h"
 #include "SVC_OTA.h"
@@ -109,9 +109,13 @@ void setup() {
     delay(100);
   init_Strip();
     delay(50);
+    
 }
 
 void loop() {
+
+  yield();
+
   loop_CUSTOM_WIFI();
 
   #ifdef ENABLE_webSockets
@@ -143,55 +147,6 @@ void loop() {
 
   }
 
-  switch (Mode) {
-    case SET_MODE:
-      if (strip) {
-        strip->setMode(ws2812fx_mode);
-        strip->trigger();
-      }
-      prevmode = SET_MODE;
-      Mode = SETCOLOR;
-
-      //ESP.wdtFeed();
-      //yield();
-
-      break;
-
-    case OFF:
-      if (strip && strip->isRunning()) {
-        strip->stop();
-      }
-      break;
-
-    case SETCOLOR:
-      if (strip) {
-        strip->setColor(main_color.red, main_color.green, main_color.blue);
-        strip->trigger();
-      }
-      Mode = (prevmode == SET_MODE) ? SETSPEED : HOLD;
-      break;
-
-    case SETSPEED:
-      if (strip) {
-        strip->setSpeed(convertSpeed(ws2812fx_speed));
-        strip->trigger();
-      }
-      Mode = (prevmode == SET_MODE) ? BRIGHTNESS : HOLD;
-      break;
-
-    case BRIGHTNESS:
-      if (strip) {
-        strip->setBrightness(brightness);
-        strip->trigger();
-      }
-      if (prevmode == SET_MODE) prevmode = HOLD;
-      Mode = HOLD;
-      break;
-
-    default:
-      break;
-  }
-
   #ifdef FIRMWARE_UPDATE
     httpUpdate_loop();
   #endif
@@ -199,7 +154,7 @@ void loop() {
     handleUdpSync_loop();
   TriggerStripSave_loop();
 
-  if (strip) strip->service();
+    strip_service_loop();
 
   #ifdef ENABLE_BLINK
     wifiConnectingLedStatus();
@@ -208,5 +163,7 @@ void loop() {
 
   client_state();
   esp_reboot_timer();
+
+  delay(1);
 }
 

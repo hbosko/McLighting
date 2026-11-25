@@ -399,6 +399,10 @@ void handle_wifisave(AsyncWebServerRequest *request) {
         if (strcmp(pName, mqqtPasswdParam) == 0) {
           snprintf(WMconfig.WMmqttPass, sizeof(WMconfig.WMmqttPass), "%s", pValue);
         }
+        if (strcmp(pName, mqqtPrefixParam) == 0) {
+          snprintf(WMconfig.WMmqttPrefix, sizeof(WMconfig.WMmqttPrefix), "%s", pValue);
+        }
+        
       #endif
     }
   }
@@ -495,7 +499,7 @@ void SendHTMLStream(AsyncResponseStream *response) {
   response->print(hostNameParam);
   response->print(F("\" value=\""));
   response->print(device_name);
-  response->print(F("\" maxlength=\"16\" spellcheck=\"false\"></div></div>\n"));
+  response->print(F("\" maxlength=\"20\" spellcheck=\"false\"></div></div>\n"));
 
   response->print(F("<div class=\"form-row\"><label for=\"ssid_id\">WiFi SSID</label><div class=\"input-container\"><input id=\"ssid_id\" required type=\"text\" name=\""));
   response->print(ssidParam);
@@ -539,6 +543,14 @@ void SendHTMLStream(AsyncResponseStream *response) {
   response->print(F("\" value=\""));
   response->print(WMconfig.WMmqttPass);
   response->print(F("\" maxlength=\"64\"><div class=\"show-pass\"><input type=\"checkbox\" id=\"show_m_p\" onclick=\"togglePass('mqpw_id')\"><label for=\"show_m_p\">Show</label></div></div></div>\n"));
+
+  // MQTT Prefix
+  response->print(F("<div class=\"form-row\"><label class=\"mqform\" for=\"mqu_pf\">MQTT prefix</label><div class=\"input-container\"><input id=\"mqu_id\" type=\"text\" name=\""));
+  response->print(mqqtPrefixParam);
+  response->print(F("\" value=\""));
+  response->print(WMconfig.WMmqttPrefix);
+  response->print(F("\" maxlength=\"32\" spellcheck=\"false\"></div></div>\n"));
+
 #endif
 
   // SAVE
@@ -598,6 +610,7 @@ String parseWifi() {
     root[mqqtPortParam]   = WMconfig.WMmqttPort;
     root[mqqtUserParam]   = WMconfig.WMmqttUser;
     root[mqqtPasswdParam] = WMconfig.WMmqttPass;
+    root[mqqtPrefixParam] = WMconfig.WMmqttPrefix;
   #endif
 
   String output = "";
@@ -642,6 +655,7 @@ bool read_Wifi_from_FS() {
           WMconfig.WMmqttPort   = json[mqqtPortParam].as<uint16_t>(); // Številke lahko ostanejo z '='
           snprintf(WMconfig.WMmqttUser, sizeof(WMconfig.WMmqttUser), "%s", json[mqqtUserParam].as<const char*>());
           snprintf(WMconfig.WMmqttPass, sizeof(WMconfig.WMmqttPass), "%s", json[mqqtPasswdParam].as<const char*>());
+          snprintf(WMconfig.WMmqttPrefix, sizeof(WMconfig.WMmqttPrefix), "%s", json[mqqtPrefixParam].as<const char*>());
         #endif
 
 

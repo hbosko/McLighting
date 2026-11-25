@@ -10,7 +10,7 @@ void esp_reboot_timer() {
     RBT_previousMillis = RBT_currentMillis;
     RBT_startTime = RBT_currentMillis;
 
-    DEBUG_PRINT("esp_reboot -> 5 sekund. Trenutni čas: "); 
+    DEBUG_PRINT("esp_reboot -> 5 sec. time: "); 
     DEBUG_PRINTLN(RBT_currentMillis / 1000); 
       notifyClients(notify_evt, "Reboot in 5 sec..");
 

@@ -1,18 +1,20 @@
 
-const char* FIRMWARE_VERSION = "3.0.3";
+const char* FIRMWARE_VERSION = "3.0.0";
 
 const char* hardCode_SSID    = "SSID";
-const char* hardCode_PASS    = "pass";
+const char* hardCode_PASS    = "No_secret";
 
 const char* softAP_PASS      = "12345678";
 
 const char* mqtt_server      = "10.10.10.10";
 const int   mqtt_port        = 1883;
 const char* mqtt_user        = "user";
-const char* mqtt_password    = "password";
+const char* mqtt_password    = "yes_secret";
+const char* mqtt_prefix      = "";
 
 const char* login_username   = "admin";
 const char* login_password   = "admin";
+
 
 const char* sketch_file      = "McLightning_3.ino";
 
@@ -59,8 +61,6 @@ const char* ws_path          = "/ws";
 
 #endif
 
-
-
 static const char mqtt_firmware[]        = "firmware";
 static const char mqtt_firmware_status[] = "firmware/status";
 
@@ -88,8 +88,6 @@ static const char mqtt_cmd[]             = "cmd";
 static const char mqtt_reboot[]          = "reboot";
 
 //URL's
-
-// protected sites
 const char* const esp_settings_path       = "/esp.json";
 
 const char* const serverURL_BRD_sett_html = "/brd";
@@ -97,16 +95,16 @@ const char* const serverURL_BRD_sett_json = "/brd/json";
 const char* const serverURL_BRD_sett_save = "/brd/save";
 
 const char* const serverURL_ESP_cmd       = "/esp/cmd";
-const char* const serverURL_ESP_CP        = "/esp/cp"; //Control panel-ish
+const char* const serverURL_ESP_CP        = "/esp/cp"; 
 const char* const serverURL_ESP_info      = "/esp/info";
-const char* const serverURL_ESP_fw        = "/esp/fw"; // pwd
+const char* const serverURL_ESP_fw        = "/esp/fw";
 
 const char* const serverURL_scan_wifi     = "/scan/wifi";
 const char* const serverURL_scan_i2c      = "/scan/i2c";
 const char* const serverURL_scan_OneWire  = "/scan/1w";
 
 // Wifimanager
-const char* const serverURL_edit_ap       = "/wifi/edit_ap"; // pwd
+const char* const serverURL_edit_ap       = "/wifi/edit_ap";
 const char* const serverURL_wifi_save     = "/wifi/save_ap";
 
 //UDP

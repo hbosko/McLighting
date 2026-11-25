@@ -194,18 +194,30 @@ void CheckPayload(const char* payload, size_t len) {
   }
 
   if (payload[0] == '#') {
-      isCustomPaletteActive = false;
+    isCustomPaletteActive = false;
+    
     handleSetMainColor(payload);
 
-      DEBUG_PRINT("Set main color to:: ");
-      DEBUG_PRINT(main_color.red);
-      DEBUG_PRINT(main_color.green);
-      DEBUG_PRINT(main_color.blue);
-      DEBUG_PRINTLN();
+    DEBUG_PRINT("Set main color to:: ");
+    DEBUG_PRINT(main_color.red);
+    DEBUG_PRINT(main_color.green);
+    DEBUG_PRINT(main_color.blue);
+    DEBUG_PRINTLN();
 
-        save_strip_state_ticker.detach();
-        save_strip_state_ticker.once(save_ticker_state_time, Trigger_Save_State);
+    if (strip && (strip->getMode() == FX_MODE_PALETTE_STATIC || strip->getMode() == 17)) {
+      strip->setMode(FX_MODE_STATIC);
+      ws2812fx_mode = FX_MODE_STATIC;
+    }
+
+    if (strip) {
+      strip->setColor(main_color.red, main_color.green, main_color.blue);
+      strip->trigger();
+    }
+
+    save_strip_state_ticker.detach();
+    save_strip_state_ticker.once(save_ticker_state_time, Trigger_Save_State);
   }
+
 
   // ? ==> Nastavi hitrost
   else if (payload[0] == '?') {
@@ -253,6 +265,8 @@ void CheckPayload(const char* payload, size_t len) {
 
   else if (payload[0] == '*') {
     handleSetAllMode(payload);
+
+    isCustomPaletteActive = false; 
       DEBUG_PRINTLN("Set main STATIC color to: ");
       DEBUG_PRINTLN(payload);
     //notifyClients(notify_evt, notify_OK); // DONT sPAM!
@@ -322,7 +336,7 @@ void CheckPayload(const char* payload, size_t len) {
       DEBUG_PRINT("P - paletteIdx: ");
       DEBUG_PRINTLN(paletteIdx);
 
-      isCustomPaletteActive = true;
+      isCustomPaletteActive = false;
 
     if (paletteIdx >= 0 && paletteIdx < BUILTIN_PALETTE_COUNT) {
       WS2812FX::Segment* seg = strip->getSegment(0);

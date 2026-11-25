@@ -3,7 +3,6 @@
 #include <Arduino.h>
 #include <array>
 #include <StreamString.h>
-#include <AsyncJson.h>
 #include <ArduinoJson.h>
 
 #if defined(ESP8266)

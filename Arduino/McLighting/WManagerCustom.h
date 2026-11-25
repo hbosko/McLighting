@@ -31,6 +31,7 @@ const char* mqqtPasswdParam = "mqpass";
 const char* mqqtUserParam = "mquser";
 const char* mqqtServerParam = "mqsrv";
 const char* mqqtPortParam = "mqport";
+const char* mqqtPrefixParam = "mqprefix";
 
 unsigned long wifiMillis = 0;
 const unsigned long WIFI_TIMEOUT = 10000; // 10 sekund 
@@ -49,10 +50,11 @@ char pass[65] = "";
 
 
 #ifdef ENABLE_MQTT
-  const char* mqttServer = mqtt_server;
-  uint16_t mqttPort = mqtt_port;
-  const char* mqttUser = mqtt_user;
-  const char* mqttPass = mqtt_password;
+  const char* mqttServer  = mqtt_server;
+  uint16_t    mqttPort    = mqtt_port;
+  const char* mqttUser    = mqtt_user;
+  const char* mqttPass    = mqtt_password;
+  const char* mqttPrefix  = mqtt_prefix;
 #endif
 
 #define wifiPath "/wifi.json"
@@ -65,8 +67,9 @@ struct WifiManagerConfig {
     #ifdef ENABLE_MQTT
       char WMmqttServer[65];
       uint16_t WMmqttPort;
-      char WMmqttUser[33];
+      char WMmqttUser[34];
       char WMmqttPass[64];
+      char WMmqttPrefix[64];
     #endif
 };
 
@@ -84,5 +87,6 @@ void initWMConfigDefaults() {
     WMconfig.WMmqttPort = mqttPort;
     snprintf(WMconfig.WMmqttUser, sizeof(WMconfig.WMmqttUser), "%s", mqttUser);
     snprintf(WMconfig.WMmqttPass, sizeof(WMconfig.WMmqttPass), "%s", mqttPass);
+    snprintf(WMconfig.WMmqttPrefix, sizeof(WMconfig.WMmqttPrefix), "%s", mqttPrefix);
   #endif
 }

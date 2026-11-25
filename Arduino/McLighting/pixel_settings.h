@@ -5,7 +5,7 @@
 #define NUMLEDS 100
 #define LED_KHZ_TYPE 1   // 1 = 800kHz (WS2812B), 2 = 400kHz (WS2811)
 
-int ws2812fx_mode = 17;
+int ws2812fx_mode = 40;
 int ws2812fx_speed = 156;
 int brightness = 196;
 
@@ -42,4 +42,4 @@ struct ledstate
 
 typedef struct ledstate LEDState;
 LEDState ledstates[NUMLEDS];
-LEDState main_color = { 64, 128, 255 };
+LEDState main_color = { 64, 254, 128 };

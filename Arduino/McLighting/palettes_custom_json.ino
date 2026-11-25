@@ -84,18 +84,20 @@ void init_palette_custom_json(){
 }
 
 void handler_save_palettes(){
-  server.addHandler(new AsyncCallbackJsonWebHandler(serverURL_save_palettes, [](AsyncWebServerRequest *request, JsonVariant &json) {
+  server.on(serverURL_save_palettes, HTTP_POST, [](AsyncWebServerRequest *request) {
+  }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
     
-    if (!json.is<JsonObject>()) {
+    JsonDocument doc;
+    
+    DeserializationError error = deserializeJson(doc, data, len);
+
+    if (error) {
       request->send(400, "application/json", "{\"status\":\"error\",\"message\":\"Wrong data format\"}");
       return;
     }
 
-    JsonObject doc = json.as<JsonObject>();
-
-    // inject protection
-    if (doc["type"].isNull() || doc["type"] != "palettes" || !doc["list"].is<JsonArray>()) {
-        DEBUG_PRINTLN("neveljavne JSON strukture zavrnjen!");
+    if (!doc.containsKey("type") || doc["type"] != "palettes" || !doc["list"].is<JsonArray>()) {
+      DEBUG_PRINTLN("Neveljavna JSON struktura!");
       request->send(422, "application/json", "{\"status\":\"error\",\"message\":\"Denied: Wrong palette structure !\"}");
       return;
     }
@@ -111,9 +113,7 @@ void handler_save_palettes(){
 
     load_palette_custom_json(); 
 
-      DEBUG_PRINTLN("Palete,json read OK!");
-
-    request->send(200, "application/json", "{\"status\":\"success\",\"message\":\"Palete success saved!\"}");
-  }, 4000)); // JSON limit 4KB
+    DEBUG_PRINTLN("Palette.json read OK!");
+    request->send(200, "application/json", "{\"status\":\"success\",\"message\":\"Palette success saved!\"}");
+  });
 }
-

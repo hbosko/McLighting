@@ -1,4 +1,5 @@
 void notifyClients(const char* topic, const char* msg) {
+  //websocket disabled in AP mode, bufferOwerflov, OOM (esp8266)
   if (apActive) {
     return;
   }
